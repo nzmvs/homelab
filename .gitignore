@@ -1,0 +1,5 @@
+*.agekey
+*.age
+*.decrypted.yaml
+.DS_Store
+kubeconfig
