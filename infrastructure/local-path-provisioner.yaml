@@ -1,0 +1,34 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: local-path-provisioner
+  namespace: flux-system
+spec:
+  interval: 24h
+  url: https://github.com/rancher/local-path-provisioner
+  ref:
+    tag: v0.0.37
+  ignore: |
+    /*
+    !/deploy/chart
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: local-path-provisioner
+  namespace: flux-system
+spec:
+  interval: 1h
+  releaseName: local-path-provisioner
+  targetNamespace: local-path-storage
+  install:
+    createNamespace: true
+  chart:
+    spec:
+      chart: ./deploy/chart/local-path-provisioner
+      sourceRef:
+        kind: GitRepository
+        name: local-path-provisioner
+  values:
+    storageClass:
+      defaultClass: true
