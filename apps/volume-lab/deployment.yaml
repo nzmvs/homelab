@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      volumes:
+        - name: test-volume
+          emptyDir:
+            sizeLimit: 500Mi
+      containers:
+      - image: nginx:latest
+        name: nginx
+        volumeMounts:
+          - mountPath: /opt/test-volume
+            name: test-volume

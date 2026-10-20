@@ -3,4 +3,4 @@ kind: Kustomization
 namespace: volume-lab
 resources:
   - namespace.yaml
-  - simple-pod.yaml 
+  - deployment.yaml
