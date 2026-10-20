@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - sops-test.sops.yaml
   - postgres
+  - volume-lab
