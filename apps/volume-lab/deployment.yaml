@@ -22,6 +22,9 @@ spec:
         - name: configmap-volume
           configMap:
             name: test-config
+        - name: local-volume
+          persistentVolumeClaim:
+            claimName: test-pvc
       containers:
       - image: nginx:latest
         name: nginx
@@ -30,3 +33,5 @@ spec:
             name: test-volume
           - mountPath: /opt/test-configmap-volume
             name: configmap-volume
+          - mountPath: /opt/test-local-volume
+            name: local-volume
