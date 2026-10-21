@@ -4,3 +4,4 @@ namespace: volume-lab
 resources:
   - namespace.yaml
   - deployment.yaml
+  - config.yaml

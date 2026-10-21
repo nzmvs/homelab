@@ -19,9 +19,14 @@ spec:
         - name: test-volume
           emptyDir:
             sizeLimit: 500Mi
+        - name: configmap-volume
+          configMap:
+            name: test-config
       containers:
       - image: nginx:latest
         name: nginx
         volumeMounts:
           - mountPath: /opt/test-volume
             name: test-volume
+          - mountPath: /opt/test-configmap-volume
+            name: configmap-volume
