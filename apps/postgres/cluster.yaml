@@ -5,6 +5,11 @@ metadata:
   namespace: postgres
 spec:
   instances: 1
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: r2-backups
   storage:
     size: 20Gi
     storageClass: local-path

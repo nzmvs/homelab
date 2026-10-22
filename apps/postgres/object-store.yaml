@@ -1,0 +1,30 @@
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: r2-backups
+  namespace: postgres
+spec:
+  configuration:
+    destinationPath: s3://homelab-postgres-backups/
+    endpointURL: https://e022d380c0c4e5f4bb64dc1f39f4bdf7.r2.cloudflarestorage.com
+    s3Credentials:
+      accessKeyId:
+        name: r2-credentials
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: r2-credentials
+        key: ACCESS_SECRET_KEY
+    data:
+      compression: gzip
+    wal:
+      compression: gzip
+  retentionPolicy: "7d"
+  instanceSidecarConfiguration:
+    env:
+      - name: AWS_DEFAULT_REGION
+        value: auto
+      # S3-compatible providers do not support all optional AWS checksums.
+      - name: AWS_REQUEST_CHECKSUM_CALCULATION
+        value: when_required
+      - name: AWS_RESPONSE_CHECKSUM_VALIDATION
+        value: when_required

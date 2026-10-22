@@ -20,8 +20,14 @@ lists the namespaces where the charts install their workloads. The PostgreSQL
 application declares its own namespace, while infrastructure Helm releases
 create their target namespaces as configured.
 
-The Barman plugin is declared, but the PostgreSQL Cluster has no backup/plugin
-configuration or backup schedule yet. Cloudflare R2 backups remain planned.
+PostgreSQL declares WAL archiving through the Barman plugin to the private
+Standard R2 bucket `homelab-postgres-backups`. The
+[ObjectStore](apps/postgres/object-store.yaml) sets gzip compression and a
+seven-day recovery window. The [schedule](apps/postgres/scheduled-backup.yaml)
+requests a backup on creation and nightly at 02:00 in the operator’s timezone. Credentials are stored in
+a SOPS-encrypted Secret. These manifests are prepared locally; deployment,
+successful backup and restore verification remain pending. Enabling the plugin
+restarts the single PostgreSQL instance.
 Local-path storage currently uses the chart's default reclaim policy rather
 than an explicit `Retain` override; see the storage task in [TODO.md](TODO.md).
 
@@ -63,6 +69,13 @@ Those Flux objects then reconcile their own repository paths.
   dashboard approval required for major updates.
 
 ## Local validation
+
+To create the R2 credential Secret, run
+`python scripts/create-r2-secret.py` in a regular terminal and enter the two S3
+keys at its hidden prompts. The [helper](scripts/create-r2-secret.py) writes only
+SOPS ciphertext to `apps/postgres/r2-credentials.sops.yaml`; it does not deploy
+the Secret. The PostgreSQL Kustomization includes the encrypted Secret for Flux
+to decrypt. See [backup verification and recovery](docs/postgres-backups.md).
 
 Run from the repository root:
 
