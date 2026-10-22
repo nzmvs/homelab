@@ -1,6 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - local-path-provisioner.yaml
-  - cert-manager.yaml
-  - cloudnative-pg.yaml
+  - local-path-provisioner
+  - cert-manager
+  - cloudnative-pg
+  - plugin-barman-cloud
