@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: test-config
-data:
-  username: "nzmvs"
-  tags: "kubernetes,k8s,devops"
