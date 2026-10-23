@@ -16,9 +16,16 @@ Enter your password twice at the hidden prompts. The helper updates only the
 SOPS-encrypted `pg-homelab` Secret locally, with username `homelab`; it handles
 base64 encoding and never writes the plaintext password to disk.
 
+## Current progress
+
+Stage 1 completed through Flux at revision `af9ddf91`. The user verified no old
+Cluster, pods, PVCs or PVs remained. Cloudflare MCP removed 13 objects from `pg/`
+and confirmed zero remaining objects. Local files now include the stage-2 Cluster
+and ScheduledBackup; commit/push and live verification are pending.
+
 ## Stage 1: remove the old database
 
-The PostgreSQL Kustomization currently includes namespace, encrypted
+The stage-1 PostgreSQL Kustomization included namespace, encrypted
 `pg-homelab` credentials, R2 credentials and ObjectStore, but excludes the Cluster
 and ScheduledBackup. The Cluster file on disk defines the future `homelab`
 database owned by `homelab`, with a 20Gi request on `local-path-retain`.
@@ -51,8 +58,7 @@ ObjectStore, credentials and archive name; no new serverName is required.
 
 ## Stage 2: bootstrap fresh
 
-Re-add these two resources to `apps/postgres/kustomization.yaml` and remove its
-stage-1 comment:
+These two resources are now re-added to `apps/postgres/kustomization.yaml`:
 
 ```yaml
   - cluster.yaml

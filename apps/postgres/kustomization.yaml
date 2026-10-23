@@ -5,3 +5,5 @@ resources:
   - pg-homelab.sops.yaml
   - r2-credentials.sops.yaml
   - object-store.yaml
+  - cluster.yaml
+  - scheduled-backup.yaml

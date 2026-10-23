@@ -13,7 +13,7 @@ live health report. Follow-up work is tracked in [TODO.md](TODO.md).
 | [cert-manager](infrastructure/cert-manager/helm.yaml) | Certificate manager | `cert-manager` | [Documentation](https://cert-manager.io/docs/) |
 | [CloudNativePG](infrastructure/cloudnative-pg/helm.yaml) | PostgreSQL operator | `cnpg-system` | [Documentation](https://cloudnative-pg.io/documentation/) |
 | [Barman Cloud plugin](infrastructure/plugin-barman-cloud/helm.yaml) | PostgreSQL backup and recovery | `cnpg-system` | [Documentation](https://cloudnative-pg.io/plugin-barman-cloud/docs/) |
-| [PostgreSQL](apps/postgres/cluster.yaml) | Database (stage 2; currently excluded) | `postgres` | [CloudNativePG](https://cloudnative-pg.io/documentation/) |
+| [PostgreSQL](apps/postgres/cluster.yaml) | Database (stage 2; deployment pending) | `postgres` | [CloudNativePG](https://cloudnative-pg.io/documentation/) |
 
 Infrastructure HelmRelease and source objects live in `flux-system`; the table
 lists the namespaces where the charts install their workloads. The PostgreSQL
@@ -62,14 +62,13 @@ from the repository.
 
 ## PostgreSQL rebootstrap
 
-The local manifests are prepared for **stage 1** of a fresh bootstrap: the
-PostgreSQL Kustomization excludes `cluster.yaml` and `scheduled-backup.yaml`.
-Deploying this stage through Flux removes the old cluster and schedule, including
-cluster-owned PVCs. The new encrypted login is included, but no replacement
-cluster is started yet. Follow the [staged runbook](docs/postgres-rebootstrap.md)
-to verify teardown, clear the old test archive through Cloudflare MCP, and then
-re-enable the Cluster and ScheduledBackup for stage 2. No stage has been deployed
-by the agent.
+Stage 1 was deployed through Flux: the user verified the old Cluster, pods,
+PVCs and PV were gone and `local-path-retain` was the default Retain class.
+Cloudflare MCP deleted the 13 old test archive objects under `pg/` and verified
+that prefix empty. The local PostgreSQL Kustomization is now prepared for
+**stage 2**, with the Cluster and ScheduledBackup re-enabled. Commit and push
+this stage for Flux to bootstrap database/user `homelab` on new Retain storage.
+Stage 2 has not been deployed. See the [runbook](docs/postgres-rebootstrap.md).
 
 ## PostgreSQL application credentials
 

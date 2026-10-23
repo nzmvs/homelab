@@ -2,7 +2,7 @@
 
 | Item | State | Action |
 | --- | --- | --- |
-| `reclaimPolicy: Retain` | Stage-1 manifests prepared; deployment pending. | Deploy new default `local-path-retain` class through Flux, then replace the empty PostgreSQL cluster/storage through staged GitOps changes and verify the new PV is Retain. Account for PVC retention; after stopping old archiving, remove only the old empty-database test archive (`pg/`) from R2 and reuse its archive name. No mutation of the old PV is planned. |
+| `reclaimPolicy: Retain` | Stage 1 complete; stage-2 manifests ready. | Deploy new default `local-path-retain` class through Flux, then replace the empty PostgreSQL cluster/storage through staged GitOps changes and verify the new PV is Retain. Account for PVC retention; after stopping old archiving, remove only the old empty-database test archive (`pg/`) from R2 and reuse its archive name. No mutation of the old PV is planned. |
 | Notification alerts | Discussed, not scoped. | notification-controller already runs. Add a `Provider` and an `Alert` in `infrastructure/` to push reconcile failures to ntfy or Discord, so a failed backup reaches the phone. |
 | db snapshots to R2 (Cloudflare) | Done; restore check accepted for current empty homelab database. | Backup and WAL objects verified in R2. User reports restored cluster running; source and restore both list `app` and `postgres`, and `app` has no user tables in either. User accepted this scope on 2026-10-23; recovery of populated tables/records remains untested. |
 | Explicit cluster-root Kustomization | Done. | `clusters/homelab/kustomization.yaml` lists `flux-system`, `infrastructure.yaml` and `apps.yaml`; local builds have an explicit entry point. |
