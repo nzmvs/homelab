@@ -27,15 +27,17 @@ Standard R2 bucket `homelab-postgres-backups`. The
 seven-day recovery window. The [schedule](apps/postgres/scheduled-backup.yaml)
 requests a backup on creation and nightly at 02:00 in the operator’s timezone. Credentials are stored in
 a SOPS-encrypted Secret. The configuration has been deployed. R2 listing confirms a compressed base
-backup, its metadata and archived WAL files. A restore drill remains pending. Enabling the plugin
+backup, its metadata and archived WAL files. The user accepted the empty-database restore check on 2026-10-23; populated-record
+recovery remains untested. Enabling the plugin
 restarts the single PostgreSQL instance.
 Local-path storage currently uses the chart's default reclaim policy rather
 than an explicit `Retain` override; see the storage task in [TODO.md](TODO.md).
 
 The temporary `pg-restore` app restores the `pg` archive from R2 into its own
 20Gi local-path volume. It reuses the PostgreSQL namespace and ObjectStore,
-and has no WAL archiving configuration of its own. Deployment and data comparison
-are pending; remove the app from Git after the drill to let Flux prune it.
+and has no WAL archiving configuration of its own. The user reports the restored cluster running, with matching database names and
+no user tables in `app` on either cluster. Remove the temporary app from Git
+to let Flux prune it; cleanup is still pending.
 
 ## Reconciliation
 

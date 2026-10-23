@@ -3,8 +3,10 @@
 The manifests configure Barman WAL archiving and compressed base backups in
 `s3://homelab-postgres-backups/`, under the server name `pg`. The schedule requests
 an immediate backup and subsequent backups at 02:00 in the operator’s timezone. Retention is a seven-day
-recovery window, not a fixed count of seven backups. Until backup and restore
-checks succeed, recovery has not been proven.
+recovery window, not a fixed count of seven backups. R2 backup and WAL objects have been verified. On 2026-10-23 the user accepted
+the restore check for the current empty database: both clusters list `app` and
+`postgres`, and neither `app` database has user tables. Recovery of populated
+tables and records has not been tested; repeat the drill once real data exists.
 
 The schedule uses six cron fields (`0 0 2 * * *`), including seconds. Do not
 prepend `CRON_TZ`: the installed admission validator rejects it. Confirm the
