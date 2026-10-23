@@ -14,6 +14,7 @@ live health report. Follow-up work is tracked in [TODO.md](TODO.md).
 | [CloudNativePG](infrastructure/cloudnative-pg/helm.yaml) | PostgreSQL operator | `cnpg-system` | [Documentation](https://cloudnative-pg.io/documentation/) |
 | [Barman Cloud plugin](infrastructure/plugin-barman-cloud/helm.yaml) | PostgreSQL backup and recovery | `cnpg-system` | [Documentation](https://cloudnative-pg.io/plugin-barman-cloud/docs/) |
 | [PostgreSQL](apps/postgres/cluster.yaml) | Database | `postgres` | [CloudNativePG](https://cloudnative-pg.io/documentation/) |
+| [pg-restore](apps/pg-restore/cluster.yaml) | Backup restore drill | `postgres` | [Runbook](docs/postgres-backups.md) |
 
 Infrastructure HelmRelease and source objects live in `flux-system`; the table
 lists the namespaces where the charts install their workloads. The PostgreSQL
@@ -25,11 +26,16 @@ Standard R2 bucket `homelab-postgres-backups`. The
 [ObjectStore](apps/postgres/object-store.yaml) sets gzip compression and a
 seven-day recovery window. The [schedule](apps/postgres/scheduled-backup.yaml)
 requests a backup on creation and nightly at 02:00 in the operator’s timezone. Credentials are stored in
-a SOPS-encrypted Secret. These manifests are prepared locally; deployment,
-successful backup and restore verification remain pending. Enabling the plugin
+a SOPS-encrypted Secret. The configuration has been deployed. R2 listing confirms a compressed base
+backup, its metadata and archived WAL files. A restore drill remains pending. Enabling the plugin
 restarts the single PostgreSQL instance.
 Local-path storage currently uses the chart's default reclaim policy rather
 than an explicit `Retain` override; see the storage task in [TODO.md](TODO.md).
+
+The temporary `pg-restore` app restores the `pg` archive from R2 into its own
+20Gi local-path volume. It reuses the PostgreSQL namespace and ObjectStore,
+and has no WAL archiving configuration of its own. Deployment and data comparison
+are pending; remove the app from Git after the drill to let Flux prune it.
 
 ## Reconciliation
 
