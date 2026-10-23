@@ -5,6 +5,22 @@ metadata:
   namespace: postgres
 spec:
   instances: 1
+  managed:
+    services:
+      additional:
+        - selectorType: rw
+          serviceTemplate:
+            metadata:
+              name: pg-lan
+            spec:
+              type: NodePort
+              externalTrafficPolicy: Cluster
+              ports:
+                - name: postgres
+                  protocol: TCP
+                  port: 5432
+                  targetPort: 5432
+                  nodePort: 30432
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true

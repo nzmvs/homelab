@@ -11,3 +11,4 @@
 | Component directory layout | Done. | Apps and infrastructure use component directories with child Kustomizations; infrastructure renders unchanged. |
 | Create an Open Knowledge Format (OKF) description of the homelab | Open. | Document cluster components, relationships and operational context using the [Open Knowledge Format specification](https://github.com/GoogleCloudPlatform/open-knowledge-format). Link the resulting knowledge bundle from README.md. |
 | Clean up restore drill app | Open. | Remove `apps/pg-restore` and its parent Kustomization entry through GitOps, then verify only restore-test resources/PVCs are removed; preserve `pg` and its backups. |
+| Cilium LoadBalancer for LAN services | Open. | Configure a DHCP-excluded LAN IP pool and L2 announcement policy; verify installed Cilium version and kube-proxy replacement prerequisites, then migrate PostgreSQL LAN access from NodePort to a CNPG-managed LoadBalancer Service. |

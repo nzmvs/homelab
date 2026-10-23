@@ -6,3 +6,8 @@ component, update its README entry, manifest links, versions, namespaces,
 dependencies and relevant operational notes in the same change. Distinguish
 configured functionality from planned work; do not claim live health without
 checking it. Verify that relative documentation links resolve.
+
+All Kubernetes cluster configuration changes must go through Git and Flux.
+Do not apply, patch or delete live cluster resources directly; use kubectl for
+read-only inspection and validation.
+

@@ -39,6 +39,18 @@ and has no WAL archiving configuration of its own. The user reports the restored
 no user tables in `app` on either cluster. Remove the temporary app from Git
 to let Flux prune it; cleanup is still pending.
 
+## PostgreSQL LAN access
+
+This configuration is pending deployment through Git and Flux.
+
+The [PostgreSQL Cluster](apps/postgres/cluster.yaml) declares the CNPG-managed
+`pg-lan` NodePort Service in namespace `postgres`. It follows the current primary
+and exposes TCP `30432` on the nodes, forwarding to PostgreSQL port `5432`.
+For the current home node, connect to `192.168.0.40:30432` with database `app`
+and user `app`, using the existing application password. Internal clients can
+continue using `pg-rw:5432`. LAN reachability depends on node firewall and routing.
+A Cilium LoadBalancer with a dedicated LAN IP is planned; see [TODO.md](TODO.md).
+
 ## Reconciliation
 
 The [Flux Git source](clusters/homelab/flux-system/gotk-sync.yaml) tracks the
