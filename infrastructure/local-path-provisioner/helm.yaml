@@ -31,4 +31,4 @@ spec:
         name: local-path-provisioner
   values:
     storageClass:
-      defaultClass: true
+      defaultClass: false

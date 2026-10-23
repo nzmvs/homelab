@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: pg-homelab
+    namespace: postgres
+    labels:
+        cnpg.io/reload: "true"
+type: kubernetes.io/basic-auth
+data:
+    username: ENC[AES256_GCM,data:5ioDoPd2n9reZB5r,iv:ufmP/P4pkty2lpx1UF8iWLQ3gHX8lVxw3zq/A736hg8=,tag:VQ97qt1wtGK/qw9rX5lrKA==,type:str]
+    password: ENC[AES256_GCM,data:VYsHq0Pxj2cSZTSQfUUPcpVZlfU0vQb0BMUuCZfVjF4aCxtdeuNSXwgIDERLQe1NLsREkgn5P+gMHlAf,iv:UeHQP+EqYXHwzE63nde976gDMeyxxcWIEaiFC3Exgss=,tag:/jtGQ6umH+BvRaMH7uqwNg==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA1K3pMVzZ4NTYzUXowWDd6
+            TDI4Zm5YQ2pXVW1VeFBKRXlndVZ3SkgyOHlBCm9vZlV5bG9leGd5dkdremc3ejhJ
+            L2lweExyQ00vSlQ2dDlXbzh4Q3pMbjAKLS0tIG5YUmhOdWU1UHdsdkxTNTFNanFq
+            WUxBRDFDVDZpaTdnYkVBQVZZSEwwVncKHI8xQG3aeFgg1EanByztZR9pszM8N+W0
+            6xSdqz6VGGuC+YMvoU3H52WOTWJzssggFVryJSuN7Pbseujqni0AAw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age128dhcurcxpkh6p5yd4as48fmsa2q84u2t9ftu4sues0dc2uxecvqvc7dxl
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-10-23T20:33:18Z"
+    mac: ENC[AES256_GCM,data:gErW9zrqrxgjJlpB2oOrr0R8IDwxO+fjZlQEOTJv75eU4jM3bdyYc63tZ6Bh7gFzjVRfZNW7mdNknTYpz5WdqMPuIUYnLBzRVgpWOvZ45x62a0QLK+0tmu/mJIVUgu+AADxgW3mj1vwCgQ/uFjkCDaH2h4uCeYsw3190Z+J5eJE=,iv:rNlunA/DagaEXIgcsYdo4txzjBbBlO4/ARG3+Jq3CnQ=,tag:llNt6oRdqiY8Gemi81YekA==,type:str]
+    version: 3.13.3

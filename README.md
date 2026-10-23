@@ -13,8 +13,7 @@ live health report. Follow-up work is tracked in [TODO.md](TODO.md).
 | [cert-manager](infrastructure/cert-manager/helm.yaml) | Certificate manager | `cert-manager` | [Documentation](https://cert-manager.io/docs/) |
 | [CloudNativePG](infrastructure/cloudnative-pg/helm.yaml) | PostgreSQL operator | `cnpg-system` | [Documentation](https://cloudnative-pg.io/documentation/) |
 | [Barman Cloud plugin](infrastructure/plugin-barman-cloud/helm.yaml) | PostgreSQL backup and recovery | `cnpg-system` | [Documentation](https://cloudnative-pg.io/plugin-barman-cloud/docs/) |
-| [PostgreSQL](apps/postgres/cluster.yaml) | Database | `postgres` | [CloudNativePG](https://cloudnative-pg.io/documentation/) |
-| [pg-restore](apps/pg-restore/cluster.yaml) | Backup restore drill | `postgres` | [Runbook](docs/postgres-backups.md) |
+| [PostgreSQL](apps/postgres/cluster.yaml) | Database (stage 2; currently excluded) | `postgres` | [CloudNativePG](https://cloudnative-pg.io/documentation/) |
 
 Infrastructure HelmRelease and source objects live in `flux-system`; the table
 lists the namespaces where the charts install their workloads. The PostgreSQL
@@ -30,14 +29,66 @@ a SOPS-encrypted Secret. The configuration has been deployed. R2 listing confirm
 backup, its metadata and archived WAL files. The user accepted the empty-database restore check on 2026-10-23; populated-record
 recovery remains untested. Enabling the plugin
 restarts the single PostgreSQL instance.
-Local-path storage currently uses the chart's default reclaim policy rather
-than an explicit `Retain` override; see the storage task in [TODO.md](TODO.md).
+The Retain policy changes below are pending deployment through Git and Flux.
+[local-path-retain](infrastructure/local-path-provisioner/storage-class-retain.yaml)
+is a new default StorageClass using the existing local-path provisioner with
+`reclaimPolicy: Retain`. The chart-managed `local-path` class remains available
+with its existing `Delete` policy, but its default-class annotation is disabled
+through Helm values. A new class avoids changing an immutable reclaim policy.
+CNPG selects `local-path-retain` for newly created claims. Since the current
+database is empty, the intended transition is a fresh PostgreSQL bootstrap on
+this class through a staged Git/Flux change. Merely changing the Cluster storage
+class does not replace its existing PVC: the running `pg-1` volume remains on
+`local-path` with `Delete` until that transition. No existing-PV overlay is used.
+The database/PVC replacement has not been performed. Before rebootstrap, account
+for CNPG's PVC ownership/retention behavior. The user approved discarding the old
+empty-database test backups: after the old cluster has stopped archiving, remove
+only its `pg/` archive prefix from the R2 bucket, then bootstrap against that
+empty prefix using the existing archive name. Cleanup has not been performed;
+do not delete bucket contents while the old cluster is still writing backups/WAL.
+Retain preserves storage after PVC deletion, requires manual recovery/cleanup,
+and does not replace the R2 backups.
 
-The temporary `pg-restore` app restores the `pg` archive from R2 into its own
-20Gi local-path volume. It reuses the PostgreSQL namespace and ObjectStore,
-and has no WAL archiving configuration of its own. The user reports the restored cluster running, with matching database names and
-no user tables in `app` on either cluster. Remove the temporary app from Git
-to let Flux prune it; cleanup is still pending.
+The PostgreSQL claim requests `20Gi`. Local Path Provisioner does not enforce
+capacity limits on its hostPath directories: the database shares the node
+filesystem with the OS and other workloads. Monitor filesystem free space as
+well as database size and WAL growth; changing the request does not reserve disk
+space. Read-only checks on 2026-10-23 found `app` at about 7.6 MiB, the PGDATA
+directory at 384 MiB, and about 203 GiB available on the shared filesystem.
+
+The earlier empty-database restore drill is documented in the
+[backup runbook](docs/postgres-backups.md); its temporary app has been removed
+from the repository.
+
+## PostgreSQL rebootstrap
+
+The local manifests are prepared for **stage 1** of a fresh bootstrap: the
+PostgreSQL Kustomization excludes `cluster.yaml` and `scheduled-backup.yaml`.
+Deploying this stage through Flux removes the old cluster and schedule, including
+cluster-owned PVCs. The new encrypted login is included, but no replacement
+cluster is started yet. Follow the [staged runbook](docs/postgres-rebootstrap.md)
+to verify teardown, clear the old test archive through Cloudflare MCP, and then
+re-enable the Cluster and ScheduledBackup for stage 2. No stage has been deployed
+by the agent.
+
+## PostgreSQL application credentials
+
+The new application login (`homelab`, database `homelab`) is declared in the
+[SOPS-encrypted pg-homelab Secret](apps/postgres/pg-homelab.sops.yaml).
+The Cluster references it under `bootstrap.initdb.secret`; Flux decrypts it
+using the existing SOPS setup. The username matches the bootstrap owner, and
+the password is newly generated. Superuser password access remains disabled.
+This change is pending deployment through Git and Flux.
+Set your chosen password with the hidden-input
+[helper](scripts/create-postgres-secret.py):
+
+```sh
+python scripts/create-postgres-secret.py --replace
+```
+
+It prompts twice, performs base64 encoding and SOPS encryption in memory, and
+writes only ciphertext. The existing Secret is replaced only after successful
+encryption. This changes local files; deployment remains through Git and Flux.
 
 ## PostgreSQL LAN access
 
@@ -46,8 +97,8 @@ This configuration is pending deployment through Git and Flux.
 The [PostgreSQL Cluster](apps/postgres/cluster.yaml) declares the CNPG-managed
 `pg-lan` NodePort Service in namespace `postgres`. It follows the current primary
 and exposes TCP `30432` on the nodes, forwarding to PostgreSQL port `5432`.
-For the current home node, connect to `192.168.0.40:30432` with database `app`
-and user `app`, using the existing application password. Internal clients can
+For the current home node, connect to `192.168.0.40:30432` with database `homelab`
+and user `homelab`, using the new password from `pg-homelab`. Internal clients can
 continue using `pg-rw:5432`. LAN reachability depends on node firewall and routing.
 A Cilium LoadBalancer with a dedicated LAN IP is planned; see [TODO.md](TODO.md).
 

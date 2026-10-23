@@ -5,6 +5,12 @@ metadata:
   namespace: postgres
 spec:
   instances: 1
+  bootstrap:
+    initdb:
+      database: homelab
+      owner: homelab
+      secret:
+        name: pg-homelab
   managed:
     services:
       additional:
@@ -28,7 +34,7 @@ spec:
         barmanObjectName: r2-backups
   storage:
     size: 20Gi
-    storageClass: local-path
+    storageClass: local-path-retain
   resources:
     requests:
       cpu: 250m
