@@ -1,14 +1,11 @@
 # TODO
 
-| Item | State | Action |
-| --- | --- | --- |
-| `reclaimPolicy: Retain` | Stage 1 complete; stage-2 manifests ready. | Deploy new default `local-path-retain` class through Flux, then replace the empty PostgreSQL cluster/storage through staged GitOps changes and verify the new PV is Retain. Account for PVC retention; after stopping old archiving, remove only the old empty-database test archive (`pg/`) from R2 and reuse its archive name. No mutation of the old PV is planned. |
-| Notification alerts | Discussed, not scoped. | notification-controller already runs. Add a `Provider` and an `Alert` in `infrastructure/` to push reconcile failures to ntfy or Discord, so a failed backup reaches the phone. |
-| db snapshots to R2 (Cloudflare) | Done; restore check accepted for current empty homelab database. | Backup and WAL objects verified in R2. User reports restored cluster running; source and restore both list `app` and `postgres`, and `app` has no user tables in either. User accepted this scope on 2026-10-23; recovery of populated tables/records remains untested. |
-| Explicit cluster-root Kustomization | Done. | `clusters/homelab/kustomization.yaml` lists `flux-system`, `infrastructure.yaml` and `apps.yaml`; local builds have an explicit entry point. |
-| Document manifest conventions | Done. | [README.md](README.md) documents cluster contents, component layout, namespace ownership, dependencies, reconciliation intervals, versions and validation. |
-| Separate Barman manifest | Done. | Barman HelmRelease lives in `infrastructure/plugin-barman-cloud/helm.yaml`; its chart source and dependencies are preserved. |
-| Component directory layout | Done. | Apps and infrastructure use component directories with child Kustomizations; infrastructure renders unchanged. |
-| Create an Open Knowledge Format (OKF) description of the homelab | Open. | Document cluster components, relationships and operational context using the [Open Knowledge Format specification](https://github.com/GoogleCloudPlatform/open-knowledge-format). Link the resulting knowledge bundle from README.md. |
-| Clean up restore drill app | Open. | Remove `apps/pg-restore` and its parent Kustomization entry through GitOps, then verify only restore-test resources/PVCs are removed; preserve `pg` and its backups. |
-| Cilium LoadBalancer for LAN services | Open. | Configure a DHCP-excluded LAN IP pool and L2 announcement policy; verify installed Cilium version and kube-proxy replacement prerequisites, then migrate PostgreSQL LAN access from NodePort to a CNPG-managed LoadBalancer Service. |
+Outstanding work only. Completed outcomes and verification belong in
+`~/Work/CHANGELOG.md` and Git history.
+
+| Item | Remaining work |
+| --- | --- |
+| Notification alerts | notification-controller already runs. Add a `Provider` and an `Alert` in `infrastructure/` to push reconcile failures to ntfy or Discord, so a failed backup reaches the phone. |
+| Create an Open Knowledge Format (OKF) description of the homelab | Document cluster components, relationships and operational context using the [Open Knowledge Format specification](https://github.com/GoogleCloudPlatform/open-knowledge-format). Link the resulting knowledge bundle from README.md. |
+| Restore drill for fresh homelab database | Deploy pg-restore through Flux, verify homelab database/owner and any known records, then remove only the drill app through GitOps and verify its Delete-policy storage is cleaned up. Source pg and R2 archive remain unchanged. |
+| Cilium LoadBalancer for LAN services | Configure a DHCP-excluded LAN IP pool and L2 announcement policy; verify installed Cilium version and kube-proxy replacement prerequisites, then migrate PostgreSQL LAN access from NodePort to a CNPG-managed LoadBalancer Service. |

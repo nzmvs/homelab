@@ -11,3 +11,10 @@ All Kubernetes cluster configuration changes must go through Git and Flux.
 Do not apply, patch or delete live cluster resources directly; use kubectl for
 read-only inspection and validation.
 
+Keep README focused on declared architecture and stable operating guidance.
+Update it for configuration or procedure changes, not rollout phases, status
+transitions, command output or per-run resource IDs. Keep TODO focused on open
+work; remove completed items instead of keeping completion narratives. Record
+progress, dated evidence and outcomes in the global append-only CHANGELOG.
+Runbooks contain repeatable procedures, not another progress log.
+

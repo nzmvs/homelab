@@ -15,3 +15,10 @@ The agent prepares and validates local files; the user runs deployment commands.
 Do not commit, push, trigger reconciliations or perform remote mutations without
 explicit user authorization. Use the connected Cloudflare MCP for R2 operations
 rather than rclone.
+
+Keep README focused on declared architecture and stable operating guidance.
+Update it for configuration or procedure changes, not rollout phases, status
+transitions, command output or per-run resource IDs. Keep TODO focused on open
+work; remove completed items instead of keeping completion narratives. Record
+progress, dated evidence and outcomes in the global append-only CHANGELOG.
+Runbooks contain repeatable procedures, not another progress log.
