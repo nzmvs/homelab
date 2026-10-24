@@ -1,0 +1,39 @@
+version: '3'
+tasks:
+  password:
+    desc: Set application password in the local encrypted Secret
+    cmds:
+    - python taskfiles/postgres/create-secret.py --replace
+    interactive: true
+  r2-credentials:
+    desc: Create the local encrypted R2 Secret (refuses overwrite)
+    cmds:
+    - python taskfiles/postgres/create-r2-secret.py
+    interactive: true
+  status:
+    desc: Inspect database, backup configuration and recent backup results
+    cmds:
+    - '{{.KUBE}} -n {{.NAMESPACE}} get cluster.postgresql.cnpg.io pg'
+    - '{{.KUBE}} -n {{.NAMESPACE}} get objectstore r2-backups'
+    - '{{.KUBE}} -n {{.NAMESPACE}} get scheduledbackup.postgresql.cnpg.io pg-nightly'
+    - '{{.KUBE}} -n {{.NAMESPACE}} get backups.postgresql.cnpg.io'
+    - '{{.KUBE}} -n {{.NAMESPACE}} describe cluster.postgresql.cnpg.io pg'
+  storage:
+    desc: Inspect reconciliation, database resources and volume reclaim policies
+    cmds:
+    - '{{.KUBE}} -n flux-system get kustomization apps infrastructure'
+    - '{{.KUBE}} -n {{.NAMESPACE}} get clusters.postgresql.cnpg.io,pods,pvc'
+    - '{{.KUBE}} get pv'
+    - '{{.KUBE}} get storageclass'
+  restore:verify:
+    desc: Wait for the restore drill and compare source/restored database ownership
+    cmds:
+    - '{{.KUBE}} -n {{.NAMESPACE}} get clusters.postgresql.cnpg.io,pods,pvc'
+    - '{{.KUBE}} -n {{.NAMESPACE}} wait --for=condition=Ready cluster.postgresql.cnpg.io/pg-restore --timeout=10m'
+    - '{{.KUBE}} -n {{.NAMESPACE}} exec pg-1 -c postgres -- psql -X -U postgres -d homelab -c "SELECT current_database(),
+      pg_get_userbyid(datdba) AS owner FROM pg_database WHERE datname=current_database();"'
+    - '{{.KUBE}} -n {{.NAMESPACE}} exec pg-restore-1 -c postgres -- psql -X -U postgres -d homelab -c "SELECT current_database(),
+      pg_get_userbyid(datdba) AS owner FROM pg_database WHERE datname=current_database();"'
+    preconditions:
+    - sh: '{{.KUBE}} -n {{.NAMESPACE}} get cluster.postgresql.cnpg.io pg-restore --request-timeout=10s >/dev/null'
+      msg: The pg-restore drill is not deployed. Follow the restore runbook and deploy it through Git/Flux first.

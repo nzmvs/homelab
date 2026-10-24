@@ -26,11 +26,11 @@ Cluster `pg` bootstraps database `homelab`, owned by login `homelab`.
 The [application Secret](apps/postgres/pg-homelab.sops.yaml) is SOPS-encrypted
 and referenced by `bootstrap.initdb.secret`. Superuser password access is disabled
 by default. Set the application password locally with the
-[hidden-input helper](scripts/create-postgres-secret.py), then deploy through Git
+[hidden-input helper](taskfiles/postgres/create-secret.py), then deploy through Git
 and Flux:
 
 ```sh
-python scripts/create-postgres-secret.py --replace
+go-task postgres:password
 ```
 
 The helper confirms the password, handles base64 encoding and writes only SOPS
@@ -106,7 +106,7 @@ SOPS decryption using `flux-system/sops-age`. Notification delivery requires
 credentials, deployment and verification; PostgreSQL backup monitoring remains
 separate work.
 
-Run `python scripts/test-telegram.py` to send a test message using the saved
+Run `go-task telegram:test` to send a test message using the saved
 configuration and inspect request errors. See the [setup guide](docs/telegram-alerts.md).
 
 ## Repository conventions
@@ -127,11 +127,54 @@ configuration and inspect request errors. See the [setup guide](docs/telegram-al
 - [renovate.json](renovate.json) configures Flux dependency updates, with
   dashboard approval required for major updates.
 
+## Runbook tasks
+
+[Taskfile.yml](Taskfile.yml) exposes repeatable runbook commands using the
+installed `go-task` executable. The root file composes the following modules:
+
+| Included Taskfile | Responsibility |
+| --- | --- |
+| [validate/Taskfile.yml](taskfiles/validate/Taskfile.yml) | Local manifest and whitespace checks |
+| [telegram/Taskfile.yml](taskfiles/telegram/Taskfile.yml) | Bot setup, delivery test and Flux notification inspection |
+| [postgres/Taskfile.yml](taskfiles/postgres/Taskfile.yml) | Credentials, backup/storage status and restore verification |
+
+Each module keeps its supporting Python files beside its Taskfile. Taskfiles
+orchestrate commands; adjacent Python files own credential handling, rendering
+and validation logic. The command names remain the public interface.
+
+Taskfiles use native `includes` namespaces. The root retains shared context
+configuration and entrypoints. Shared `KUBECTL_COMMAND` selects and shell-quotes
+the context. Each include receives a `KUBE` command and a separate `NAMESPACE`
+value. Tasks compose `{{.KUBE}} -n {{.NAMESPACE}}` for their usual namespace,
+specify another namespace explicitly when needed, or omit `-n` for cluster-wide
+operations. Namespace values remain configuration rather than additional command
+aliases. Include variables preserve scope and context overrides. Commands and helpers execute from the repository
+root, including when invoked from a subdirectory. Use leading `:` for calls
+from a module to another root namespace.
+
+Run from the repository root or a subdirectory:
+
+```sh
+go-task --list
+go-task --dry validate
+go-task validate
+```
+
+The default task lists commands. `validate` renders manifests locally and checks
+diff whitespace. Python helpers retain credential handling and test logic. Credential tasks write local encrypted files; `telegram:test` sends one
+message.
+
+Live inspection tasks explicitly use context `homelab`. Override it when
+needed, for example `go-task telegram:status KUBE_CONTEXT=homelab`.
+Requirements depend on the task: kubectl/Git for local rendering and inspection, and Python/PyYAML/SOPS for
+credential helpers. Tasks do not commit, push, reconcile, apply or delete cluster
+resources; follow the runbooks for deployment and cleanup.
+
 ## Local validation
 
 To create the R2 credential Secret, run
-`python scripts/create-r2-secret.py` in a regular terminal and enter the two S3
-keys at its hidden prompts. The [helper](scripts/create-r2-secret.py) writes only
+`go-task postgres:r2-credentials` in a regular terminal and enter the two S3
+keys at its hidden prompts. The [helper](taskfiles/postgres/create-r2-secret.py) writes only
 SOPS ciphertext to `apps/postgres/r2-credentials.sops.yaml`; it does not deploy
 the Secret. The PostgreSQL Kustomization includes the encrypted Secret for Flux
 to decrypt. See [backup verification and recovery](docs/postgres-backups.md).
@@ -139,10 +182,7 @@ to decrypt. See [backup verification and recovery](docs/postgres-backups.md).
 Run from the repository root:
 
 ```sh
-kubectl kustomize clusters/homelab
-kubectl kustomize infrastructure
-kubectl kustomize apps
-git diff --check
+go-task validate
 ```
 
 These checks render manifests locally; they do not deploy resources or establish

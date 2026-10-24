@@ -13,7 +13,7 @@ import yaml
 
 
 def main():
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     token = ''
 
     def report(value):

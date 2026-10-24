@@ -1,5 +1,8 @@
 # Fresh homelab database bootstrap
 
+Run commands from the repository root using `go-task`; see the
+[task guide](../README.md#runbook-tasks) for prerequisites, previews and context selection.
+
 All cluster changes go through Git and Flux. The user runs deployment commands;
 the agent prepares files only. Use Cloudflare MCP for R2 inspection and cleanup.
 This procedure replaces an empty, disposable database on Delete-policy storage
@@ -12,7 +15,7 @@ before planning any replacement; do not assume retained data will be removed.
 From the repository root, run:
 
 ```sh
-python scripts/create-postgres-secret.py --replace
+go-task postgres:password
 ```
 
 Enter your password twice at the hidden prompts. The helper updates only the
@@ -34,10 +37,7 @@ are actually gone. Keep the namespace and backup configuration.
 Read-only checks (run from the repository root):
 
 ```sh
-k -n flux-system get kustomization apps infrastructure
-k -n postgres get clusters,pods,pvc
-k get pv
-k get storageclass
+go-task postgres:storage
 ```
 
 Verify `pg`, its pods and old `pg-1` PVC/PV are gone, and that
@@ -65,10 +65,7 @@ Review, validate, commit and push that change for Flux to deploy. Never push
 stage 2 before teardown and archive cleanup have been verified.
 
 ```sh
-kubectl kustomize infrastructure >/dev/null
-kubectl kustomize apps >/dev/null
-kubectl kustomize clusters/homelab >/dev/null
-git diff --check
+go-task validate
 ```
 
 Verify the new Cluster is Ready, its new PV uses Retain, and the new database

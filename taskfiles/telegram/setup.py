@@ -81,7 +81,7 @@ def main():
                         help='replace existing Telegram credentials and destination')
     parser.add_argument('--chat-id', help='use a known chat ID or @channel instead of discovery')
     args = parser.parse_args()
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     directory = root / 'infrastructure/notifications'
     destination = directory / 'telegram-token.sops.yaml'
     provider_path = directory / 'provider.yaml'

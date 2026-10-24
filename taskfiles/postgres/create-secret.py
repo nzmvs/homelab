@@ -17,7 +17,7 @@ def main():
     parser.add_argument("--replace", action="store_true",
                         help="replace the existing encrypted homelab login")
     args = parser.parse_args()
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     destination = root / "apps/postgres/pg-homelab.sops.yaml"
     if destination.exists() and not args.replace:
         sys.exit("Secret already exists; pass --replace to set a new password.")

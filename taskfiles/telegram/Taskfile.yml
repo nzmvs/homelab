@@ -1,0 +1,21 @@
+version: '3'
+tasks:
+  setup:
+    desc: Create or replace local encrypted Telegram settings (flags after --)
+    cmds:
+    - python taskfiles/telegram/setup.py {{.CLI_ARGS}}
+    interactive: true
+  test:
+    desc: Send one Telegram test message using saved configuration
+    cmds:
+    - python taskfiles/telegram/test.py
+  status:
+    desc: Inspect Flux Telegram Provider and Alert configuration
+    cmds:
+    - '{{.KUBE}} -n {{.NAMESPACE}} get providers,alerts'
+    - '{{.KUBE}} -n {{.NAMESPACE}} describe provider telegram'
+    - '{{.KUBE}} -n {{.NAMESPACE}} describe alert telegram-alerts'
+  logs:
+    desc: Inspect recent Flux notification-controller logs
+    cmds:
+    - '{{.KUBE}} -n {{.NAMESPACE}} logs deployment/notification-controller --since=10m --tail=100'

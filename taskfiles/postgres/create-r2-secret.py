@@ -9,7 +9,7 @@ import sys
 
 
 def main():
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     destination = root / "apps/postgres/r2-credentials.sops.yaml"
     if destination.exists():
         sys.exit(f"Already exists: {destination}; use sops to edit it.")

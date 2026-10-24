@@ -1,0 +1,25 @@
+version: '3'
+vars:
+  KUBE_CONTEXT: homelab
+  KUBECTL_COMMAND: kubectl --context {{shellQuote .KUBE_CONTEXT}}
+includes:
+  validate: ./taskfiles/validate/Taskfile.yml
+  telegram:
+    taskfile: ./taskfiles/telegram/Taskfile.yml
+    vars:
+      KUBE: '{{.KUBECTL_COMMAND}}'
+      NAMESPACE: flux-system
+  postgres:
+    taskfile: ./taskfiles/postgres/Taskfile.yml
+    vars:
+      KUBE: '{{.KUBECTL_COMMAND}}'
+      NAMESPACE: postgres
+tasks:
+  default:
+    desc: List available runbook tasks
+    cmds:
+    - go-task --list
+  validate:
+    desc: Render all manifests and check diff whitespace (local only)
+    cmds:
+    - task: validate:check

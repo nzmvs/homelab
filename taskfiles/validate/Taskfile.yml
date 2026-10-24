@@ -1,0 +1,17 @@
+version: '3'
+tasks:
+  manifests:
+    desc: Render cluster, infrastructure and application manifests locally
+    cmds:
+    - kubectl kustomize clusters/homelab >/dev/null
+    - kubectl kustomize infrastructure >/dev/null
+    - kubectl kustomize apps >/dev/null
+    preconditions:
+    - sh: command -v kubectl
+      msg: Install kubectl to render Kustomize manifests.
+  check:
+    desc: Render all manifests and check diff whitespace (local only)
+    cmds:
+    - task: manifests
+    - git diff --check
+    internal: true

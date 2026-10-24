@@ -1,5 +1,8 @@
 # PostgreSQL backups
 
+Run commands from the repository root using `go-task`; see the
+[task guide](../README.md#runbook-tasks) for prerequisites, previews and context selection.
+
 The manifests configure Barman WAL archiving and compressed base backups in
 `s3://homelab-postgres-backups/`, under the server name `pg`. The schedule requests
 an immediate backup and subsequent backups at 02:00 in the operator’s timezone. Retention is a seven-day
@@ -22,11 +25,7 @@ Flux decrypts `r2-credentials.sops.yaml` using its existing `sops-age` Secret.
 Do not apply the encrypted file directly with kubectl.
 
 ```sh
-k get cluster pg -n postgres
-k get objectstore r2-backups -n postgres
-k get scheduledbackup pg-nightly -n postgres
-k get backups -n postgres
-k describe cluster pg -n postgres
+go-task postgres:status
 ```
 
 Check that the Cluster returns to Ready, WAL archiving succeeds and at least one
@@ -94,10 +93,7 @@ uses the shared filesystem; 20Gi is not an enforced quota.
 After Flux deployment, run:
 
 ```sh
-k -n postgres get clusters,pods,pvc
-k -n postgres wait --for=condition=Ready cluster.postgresql.cnpg.io/pg-restore --timeout=10m
-k -n postgres exec pg-1 -c postgres -- psql -X -U postgres -d homelab -c "SELECT current_database(), pg_get_userbyid(datdba) AS owner FROM pg_database WHERE datname=current_database();"
-k -n postgres exec pg-restore-1 -c postgres -- psql -X -U postgres -d homelab -c "SELECT current_database(), pg_get_userbyid(datdba) AS owner FROM pg_database WHERE datname=current_database();"
+go-task postgres:restore:verify
 ```
 
 Both database/owner results should be `homelab`. Compare any known application
