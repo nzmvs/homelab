@@ -42,14 +42,46 @@ first. A ready pod alone does not prove R2 access or backup success.
 
 ## Restore drill
 
-The [pg-restore app](../apps/pg-restore/cluster.yaml) is included in the
-[parent apps Kustomization](../apps/kustomization.yaml). The user reviews,
-commits and pushes its configuration for Flux to deploy. Check live status before
-running the comparisons.
+To run a drill, create `apps/pg-restore/cluster.yaml` using the template below,
+add a child `kustomization.yaml` listing `cluster.yaml`, and add `pg-restore` to
+[parent apps Kustomization](../apps/kustomization.yaml). Review, commit and push
+for Flux to deploy. The temporary app is not part of the permanent inventory.
+Use the same PostgreSQL major version as the source and check its image tag
+before deploying the template.
+
+```yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-restore
+  namespace: postgres
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.4-system-trixie
+  bootstrap:
+    recovery:
+      source: pg-archive
+  externalClusters:
+    - name: pg-archive
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: r2-backups
+          serverName: pg
+  storage:
+    size: 20Gi
+    storageClass: local-path
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+```
 
 Flux will create a separate `pg-restore` Cluster in namespace `postgres`, reusing
-`r2-backups` and reading archive server `pg`. The PostgreSQL 18.4 image matches
-the source version observed earlier. There is no top-level `plugins` archiver
+`r2-backups` and reading archive server `pg`. The template pins PostgreSQL 18.4;
+adjust it if the source version changes. There is no top-level `plugins` archiver
 configuration or backup schedule, so the drill does not write WAL or backups to
 the source archive. Recovery uses the latest usable base backup and available WAL.
 The source Cluster, its Retain PVC and its NodePort Service are unchanged.

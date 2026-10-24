@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: telegram-token
+    namespace: flux-system
+type: Opaque
+stringData:
+    token: ENC[AES256_GCM,data:6sBxlLoJ6ODgybkcTfLBbEIMzc+rqwbFOTP6dyVh6t0oblQ0FcvSCYCHRhOBmQ==,iv:bboYPli+bs9RTxOOdgWIzuod7cknw0edFne6mYy1I7k=,tag:dUem6S5FIzVRs+gygJ/IZQ==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBUUTkxMUhLYmZOS1lQVGhB
+            UnZORnQrM2pTMzFjb3pFWDNoK3JQTUZsSTJvCkxzd2FDMm9kNnpid1F0Uk5DUGdl
+            cnVSZ2dOM0J5ZWRRWHVNT0ZPQThDRDQKLS0tIC80OTh1RFNGcmxEYXpYOWJpd3Na
+            TTE2NGJkUmtBdWVPdmczNHBiTnUrNlUKAglupQ7SpJdbLiCK20e57uO0eoQ2ieUS
+            JGJgFizK26XX4K9Y71HWVFbrFHmUvrVqN1X6tKg6ZU0N7TRlP/ySCA==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age128dhcurcxpkh6p5yd4as48fmsa2q84u2t9ftu4sues0dc2uxecvqvc7dxl
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-10-24T06:59:02Z"
+    mac: ENC[AES256_GCM,data:j/DYL7Z9g6uiM1P0fuzv3yIEhPLNnMBoxlPQLEqXr3N5duv2jPXlb4Tz0vzGVcLYh4cSHseGve1br3sax8h2RdNueJ8VpqGmKIY0abarpQJoFzEuf9tH0/bb5e9kuBaxL2sbamPR8BgqUL8yy68VUTZD7xdvWgN5SoXyFNveb7M=,iv:VfA64PXjjMDWbX5+HsBIyuPPaCmARzPlT3FkoyB0DTU=,tag:6cXc4qajgiTdxF22aD6r5Q==,type:str]
+    version: 3.13.3

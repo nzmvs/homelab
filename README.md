@@ -14,7 +14,6 @@ live health report. Follow-up work is tracked in [TODO.md](TODO.md).
 | [CloudNativePG](infrastructure/cloudnative-pg/helm.yaml) | PostgreSQL operator | `cnpg-system` | [Documentation](https://cloudnative-pg.io/documentation/) |
 | [Barman Cloud plugin](infrastructure/plugin-barman-cloud/helm.yaml) | PostgreSQL backup and recovery | `cnpg-system` | [Documentation](https://cloudnative-pg.io/plugin-barman-cloud/docs/) |
 | [PostgreSQL](apps/postgres/cluster.yaml) | Database | `postgres` | [CloudNativePG](https://cloudnative-pg.io/documentation/) |
-| [pg-restore](apps/pg-restore/cluster.yaml) | Temporary restore drill | `postgres` | [Runbook](docs/postgres-backups.md) |
 
 Infrastructure HelmRelease and source objects live in `flux-system`; the table
 lists the namespaces where the charts install their workloads. The PostgreSQL
@@ -56,8 +55,8 @@ is the default StorageClass and uses Retain. PostgreSQL explicitly selects it
 with a `20Gi` request. Retained data requires manual recovery or cleanup after
 PVC deletion; Retain does not replace backups.
 
-The chart-managed `local-path` class uses Delete and is not the default. The
-temporary `pg-restore` cluster selects it for disposable test storage. Both
+The chart-managed `local-path` class uses Delete and is not the default. A
+temporary restore drill can select it for disposable test storage. Both
 classes use the same provisioner and `/opt/local-path-provisioner` on the node.
 Local Path Provisioner does not enforce capacity quotas: `20Gi` neither reserves
 space nor limits directory growth. Monitor shared filesystem space, database size
@@ -95,6 +94,20 @@ Those Flux objects then reconcile their own repository paths.
   and enables SOPS decryption using the `sops-age` Secret.
 - Both Kustomizations enable pruning of resources removed from their manifests.
 - Helm releases reconcile hourly; Helm/Git chart sources refresh daily.
+
+## Notifications
+
+[Telegram alerts](docs/telegram-alerts.md) forward Flux informational and error events
+using the existing notification-controller. Run the documented setup helper to
+discover the destination chat, create the Provider and SOPS-encrypted bot token,
+and enable the
+[notification manifests](infrastructure/notifications/). Infrastructure enables
+SOPS decryption using `flux-system/sops-age`. Notification delivery requires
+credentials, deployment and verification; PostgreSQL backup monitoring remains
+separate work.
+
+Run `python scripts/test-telegram.py` to send a test message using the saved
+configuration and inspect request errors. See the [setup guide](docs/telegram-alerts.md).
 
 ## Repository conventions
 
