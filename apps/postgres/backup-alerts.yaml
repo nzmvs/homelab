@@ -1,0 +1,87 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pg-backups
+  namespace: postgres
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: pg-backups
+      rules:
+        - alert: PostgreSQLBackupFailed
+          expr: |
+            max(barman_cloud_cloudnative_pg_io_last_failed_backup_timestamp{namespace="postgres",cluster="pg"})
+            >
+            (max(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{namespace="postgres",cluster="pg"}) or vector(0))
+          for: 5m
+          labels:
+            severity: critical
+            service: pg-backups
+          annotations:
+            summary: "PostgreSQL pg: a backup failed"
+            description: "The latest failed backup is newer than the latest successful backup. Inspect Backup resources and the Barman sidecar logs."
+        - alert: PostgreSQLBackupOverdue
+          expr: |
+            time() - max(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{namespace="postgres",cluster="pg"}) > 26 * 3600
+          for: 5m
+          labels:
+            severity: critical
+            service: pg-backups
+          annotations:
+            summary: "PostgreSQL pg: no successful backup within 26 hours"
+            description: "Check pg-nightly, recent Backup resources and access to R2. A timestamp of zero means no successful backup is available."
+        - alert: PostgreSQLWALArchivingFailed
+          expr: |
+            max(cnpg_pg_stat_archiver_last_failed_time{namespace="postgres",cluster="pg"})
+            >
+            max(cnpg_pg_stat_archiver_last_archived_time{namespace="postgres",cluster="pg"})
+          for: 10m
+          labels:
+            severity: critical
+            service: pg-backups
+          annotations:
+            summary: "PostgreSQL pg: WAL archiving is failing"
+            description: "The latest archive failure is newer than the latest success for ten minutes. Check Barman logs and R2 connectivity."
+        - alert: PostgreSQLWALArchivingStalled
+          expr: |
+            (max(cnpg_collector_pg_wal_archive_status{namespace="postgres",cluster="pg",value="ready"}) > 0)
+            and
+            (
+              max(cnpg_pg_stat_archiver_seconds_since_last_archival{namespace="postgres",cluster="pg"}) > 600
+              or
+              max(cnpg_pg_stat_archiver_seconds_since_last_archival{namespace="postgres",cluster="pg"}) < 0
+            )
+          for: 10m
+          labels:
+            severity: critical
+            service: pg-backups
+          annotations:
+            summary: "PostgreSQL pg: WAL files are waiting for archiving"
+            description: "WAL is pending with no recent successful archive. An idle database without pending WAL does not trigger this alert."
+        - alert: PostgreSQLBackupMetricsMissing
+          expr: |
+            absent(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{namespace="postgres",cluster="pg"})
+            or absent(barman_cloud_cloudnative_pg_io_last_failed_backup_timestamp{namespace="postgres",cluster="pg"})
+            or absent(cnpg_pg_stat_archiver_last_failed_time{namespace="postgres",cluster="pg"})
+            or absent(cnpg_pg_stat_archiver_last_archived_time{namespace="postgres",cluster="pg"})
+            or absent(cnpg_pg_stat_archiver_seconds_since_last_archival{namespace="postgres",cluster="pg"})
+            or absent(cnpg_collector_pg_wal_archive_status{namespace="postgres",cluster="pg",value="ready"})
+          for: 15m
+          labels:
+            severity: warning
+            service: pg-backups
+          annotations:
+            summary: "PostgreSQL pg: backup monitoring data is missing"
+            description: "Check the pg PodMonitor, PostgreSQL metrics endpoint and Barman plugin. Missing data does not indicate healthy backups."
+        - alert: PostgreSQLMetricsUnavailable
+          expr: |
+            (max(up{namespace="postgres",monitored_service="pg-backups"}) == 0)
+            or absent(up{namespace="postgres",monitored_service="pg-backups"})
+          for: 5m
+          labels:
+            severity: critical
+            service: pg-backups
+          annotations:
+            summary: "PostgreSQL pg: metrics cannot be scraped"
+            description: "Prometheus cannot scrape any pg instance. Check pod readiness, discovery and network access to port 9187."

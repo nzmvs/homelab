@@ -6,3 +6,4 @@ resources:
   - cloudnative-pg
   - plugin-barman-cloud
   - notifications
+  - monitoring

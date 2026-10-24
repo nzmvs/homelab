@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: alertmanager-telegram
+    namespace: monitoring
+type: Opaque
+stringData:
+    alertmanager.yaml: ENC[AES256_GCM,data:iVgWeUWom3Wa1hnS9gF81gBU5QRHWM9ZvOcBHcIyq6R8QtRIkGNRuk0Oyly2/E8BsHilQNmCeS0gT8TRZg4xC0UqqNKXwKkglOcNNxUXNJVSsGG0xNyMAuKllORxpocV8uGdHjd/bguqgBD279JPgFPag5r1RYPKX9QpUtpNvvuhoefc0T04u7w4P36rFBjMbfEZdxKIqm8MNBvIN5SuJmn/YAomj4Q1XN4sznZZsmav6kD3ePYkpY6OIGIUc0gGeIYe9BIj3gs2t0aVuFTC7PIY3my+3cBW1IdRBCAGzPOzVs80c4IYZLlV4ntuVL4dgh/AHzu46gkW1xJ1EZqiqmVoHz8S/7SQES75Q6rD3rRoo0fJ7sX599l9W+fOsRSxdlafH7+cxbbydFqSGOyO8Gt1P+34Ltw8x3Q4OF92uWndSuRgMdZOzSrdTc5TKJpZ59ruhzie/cdxtm5cWyEV/eyhROvbY6C7uExsoVZ7NxqXhRoj/uV5//HDHbAx4TQI4l8bAd+go2UdqVvkm+RGYHf1yvINtUsStWi5zbJFMtu2fOofc15brVVItULCE6G8rSDN7snzFrzANwpLyUWsYBIISOa5T68aPymqIa0NRMbLVpHuzA/DbCyduhpj+lJdk4WvyO0MOWI6CfSzQlRHU/7iTV1/RjJ/1I0LReEl0OdUzbDTj1Fb+FayNWvY7HY6pur9ZfW+5phJn3FJJTcM12x+Zfc/GCyt7nkdUZ7sCIHrB9vlfWpbzw4=,iv:PYiuDNh+v1EZ8f3CKxeOOZxuExDL6nESD7bv7OVysjc=,tag:ZmPkVkUTxXhdEtY0f9uvDA==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB6QkRpaVp2TU5od1RRS3VT
+            TlhtZmtocWZsQVRMdVE0TDVmdmVxL0lBWlZJCi8rQS90VnRLUXdhNDRpTFYxNUZS
+            ajlMa0o3N3dUQ2FETU5GOVJNUEd0bVEKLS0tIG5TRlU5WlNrc29kcXkybkVXT2Zt
+            U212RjlyT0N3N0sxUzRIb0hGMk9tTnMK7WlfoZpKU//hCD4kMDXA6R3gQuD4TZc6
+            3tOrlBLBs94cNi4rY8Kcwkd63C+IDAJ8YdUb1WbKgJLWd72bl38xBA==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age128dhcurcxpkh6p5yd4as48fmsa2q84u2t9ftu4sues0dc2uxecvqvc7dxl
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-10-24T07:22:19Z"
+    mac: ENC[AES256_GCM,data:eZzFMtljdiz9LzbRusF3+5Ckm87nxBXA8dv5U3mXRby15lv9vWBV0KQO7vMzO1Z0XupTXW5iZmtT+t/w679uoR616LPhs7pDG9R6e2kS6J9K0Z1GZuDMdbrgMOCRvEzHs4hohOxps6TLXCWNYlzyh75/AOxALLlNEsKMaaDew+4=,iv:q0+GHLJw986bzEq4HituH3E6jioZKkQzJPQnE9/9FSI=,tag:IKAaDngJaQsaK4WNPpkiDw==,type:str]
+    version: 3.13.3

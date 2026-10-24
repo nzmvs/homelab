@@ -5,8 +5,9 @@ Run commands from the repository root using `go-task`; see the
 
 Flux forwards informational events and errors from GitRepository, Kustomization, HelmRepository,
 HelmChart and HelmRelease objects in `flux-system` to Telegram. These cover
-GitOps reconciliation, not PostgreSQL backup execution, stale backups, WAL
-archiving or a complete cluster/network outage.
+GitOps reconciliation. Separate [backup monitoring](backup-alerts.md) covers
+PostgreSQL backup execution, stale backups and WAL archiving. A complete
+cluster/network outage requires external monitoring.
 
 ## Set up
 
@@ -26,7 +27,8 @@ archiving or a complete cluster/network outage.
 3. The helper writes `provider.yaml`, encrypts the token into
    `telegram-token.sops.yaml`, and enables `notifications` in the infrastructure
    Kustomization. Run `go-task telegram:setup -- --replace` to rotate credentials
-   or change chats.
+   or change chats, then `go-task monitoring:credentials` to refresh the separate
+   encrypted Alertmanager configuration.
    Chat IDs are stored in the Provider as ordinary configuration.
 
    Use a dedicated bot without an existing webhook or another update consumer.

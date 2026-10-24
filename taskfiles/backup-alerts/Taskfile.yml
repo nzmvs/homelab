@@ -1,0 +1,9 @@
+version: '3'
+tasks:
+  validate:
+    desc: Run backup alert scenarios and check Alertmanager config using Docker
+    cmds:
+    - python taskfiles/backup-alerts/validate.py
+    preconditions:
+    - sh: command -v docker && command -v sops && python -c 'import yaml'
+      msg: Docker, SOPS and Python with PyYAML are required.

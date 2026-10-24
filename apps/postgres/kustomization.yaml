@@ -1,6 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - pod-monitor.yaml
+  - backup-alerts.yaml
   - namespace.yaml
   - pg-homelab.sops.yaml
   - r2-credentials.sops.yaml

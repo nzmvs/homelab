@@ -14,11 +14,15 @@ live health report. Follow-up work is tracked in [TODO.md](TODO.md).
 | [CloudNativePG](infrastructure/cloudnative-pg/helm.yaml) | PostgreSQL operator | `cnpg-system` | [Documentation](https://cloudnative-pg.io/documentation/) |
 | [Barman Cloud plugin](infrastructure/plugin-barman-cloud/helm.yaml) | PostgreSQL backup and recovery | `cnpg-system` | [Documentation](https://cloudnative-pg.io/plugin-barman-cloud/docs/) |
 | [PostgreSQL](apps/postgres/cluster.yaml) | Database | `postgres` | [CloudNativePG](https://cloudnative-pg.io/documentation/) |
+| [Prometheus and Alertmanager](infrastructure/monitoring/helm.yaml) | PostgreSQL backup/WAL monitoring and Telegram alerts; chart `92.11.0` | `monitoring` | [Prometheus stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) |
 
 Infrastructure HelmRelease and source objects live in `flux-system`; the table
 lists the namespaces where the charts install their workloads. The PostgreSQL
 application declares its own namespace, while infrastructure Helm releases
 create their target namespaces as configured.
+Monitoring declares its own namespace and installs Prometheus Operator
+`v0.94.1`, Prometheus and Alertmanager; Grafana and general cluster exporters
+are disabled.
 
 ## PostgreSQL
 
@@ -70,6 +74,12 @@ with a seven-day recovery window. The [schedule](apps/postgres/scheduled-backup.
 requests a backup on creation and at 02:00 in the operator's timezone.
 R2 credentials are [SOPS-encrypted](apps/postgres/r2-credentials.sops.yaml).
 
+[Backup monitoring](docs/backup-alerts.md) scrapes PostgreSQL/Barman metrics and
+routes failed or overdue backups, WAL archive failures/stalls and missing metrics
+to Telegram. Monitoring installs in infrastructure; the dependent apps
+Kustomization creates its [PodMonitor](apps/postgres/pod-monitor.yaml) and
+[rules](apps/postgres/backup-alerts.yaml) after the monitoring CRDs are ready.
+
 Use the [backup runbook](docs/postgres-backups.md) to verify backup/WAL objects,
 restore into the separate `pg-restore` cluster, compare data and remove the drill
 through GitOps. The drill has no WAL archiver or LAN Service. The separate
@@ -103,8 +113,9 @@ discover the destination chat, create the Provider and SOPS-encrypted bot token,
 and enable the
 [notification manifests](infrastructure/notifications/). Infrastructure enables
 SOPS decryption using `flux-system/sops-age`. Notification delivery requires
-credentials, deployment and verification; PostgreSQL backup monitoring remains
-separate work.
+credentials, deployment and verification. [Backup alerts](docs/backup-alerts.md)
+use Prometheus and Alertmanager separately from Flux reconciliation events,
+with an encrypted Alertmanager config reusing the Telegram bot/destination.
 
 Run `go-task telegram:test` to send a test message using the saved
 configuration and inspect request errors. See the [setup guide](docs/telegram-alerts.md).
@@ -137,6 +148,8 @@ installed `go-task` executable. The root file composes the following modules:
 | [validate/Taskfile.yml](taskfiles/validate/Taskfile.yml) | Local manifest and whitespace checks |
 | [telegram/Taskfile.yml](taskfiles/telegram/Taskfile.yml) | Bot setup, delivery test and Flux notification inspection |
 | [postgres/Taskfile.yml](taskfiles/postgres/Taskfile.yml) | Credentials, backup/storage status and restore verification |
+| [monitoring/Taskfile.yml](taskfiles/monitoring/Taskfile.yml) | Chart rendering, aggregate checks, status, logs and UI forwarding |
+| [backup-alerts/Taskfile.yml](taskfiles/backup-alerts/Taskfile.yml) | Backup alert scenario and Alertmanager config validation |
 
 Each module keeps its supporting Python files beside its Taskfile. Taskfiles
 orchestrate commands; adjacent Python files own credential handling, rendering
@@ -156,18 +169,21 @@ Run from the repository root or a subdirectory:
 
 ```sh
 go-task --list
-go-task --dry validate
-go-task validate
+go-task --dry monitoring:check
+go-task monitoring:check
 ```
 
-The default task lists commands. `validate` renders manifests locally and checks
-diff whitespace. Python helpers retain credential handling and test logic. Credential tasks write local encrypted files; `telegram:test` sends one
-message.
+The default task lists commands. `validate` renders manifests locally;
+`monitoring:check` additionally renders the Helm chart and runs backup alert
+scenarios/config checks. Python helpers retain credential handling and test
+logic. Credential tasks write local encrypted files; `telegram:test` sends one
+message. Port-forward tasks run until interrupted with Ctrl+C.
 
 Live inspection tasks explicitly use context `homelab`. Override it when
-needed, for example `go-task telegram:status KUBE_CONTEXT=homelab`.
-Requirements depend on the task: kubectl/Git for local rendering and inspection, and Python/PyYAML/SOPS for
-credential helpers. Tasks do not commit, push, reconcile, apply or delete cluster
+needed, for example `go-task monitoring:status KUBE_CONTEXT=homelab`.
+Requirements depend on the task: kubectl/Git for local rendering, Helm/network
+for chart rendering, Python/PyYAML/SOPS for credential helpers, and Docker for
+alert validation. Tasks do not commit, push, reconcile, apply or delete cluster
 resources; follow the runbooks for deployment and cleanup.
 
 ## Local validation

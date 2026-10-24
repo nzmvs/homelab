@@ -1,0 +1,52 @@
+version: '3'
+tasks:
+  render:
+    desc: Render the pinned monitoring Helm chart locally (downloads chart)
+    cmds:
+    - python taskfiles/monitoring/render.py
+    preconditions:
+    - sh: command -v helm && python -c 'import yaml'
+      msg: Helm and Python with PyYAML are required.
+  check:
+    desc: Run manifest, Helm chart and backup alert checks in order
+    cmds:
+    - task: :validate
+    - task: render
+    - task: :backup-alerts:validate
+  status:
+    desc: Inspect monitoring release, workloads, storage and PostgreSQL monitors
+    cmds:
+    - '{{.KUBE}} -n flux-system get helmrelease monitoring'
+    - '{{.KUBE}} -n {{.NAMESPACE}} get pods,pvc'
+    - '{{.KUBE}} -n postgres get podmonitor pg'
+    - '{{.KUBE}} -n postgres get prometheusrule pg-backups'
+  logs:
+    desc: Inspect recent Alertmanager delivery logs
+    cmds:
+    - '{{.KUBE}} -n {{.NAMESPACE}} logs -l alertmanager=monitoring-alertmanager -c alertmanager --since=15m --tail=100'
+    preconditions:
+    - sh: '{{.KUBE}} -n {{.NAMESPACE}} get alertmanager.monitoring.coreos.com monitoring-alertmanager --request-timeout=10s
+        >/dev/null'
+      msg: Alertmanager is unavailable. Deploy monitoring through Git/Flux before reading its logs.
+  prometheus:
+    desc: Forward Prometheus to localhost:9090 until interrupted
+    cmds:
+    - '{{.KUBE}} -n {{.NAMESPACE}} port-forward svc/monitoring-prometheus 9090:9090'
+    interactive: true
+    preconditions:
+    - sh: '{{.KUBE}} -n {{.NAMESPACE}} get service monitoring-prometheus --request-timeout=10s >/dev/null'
+      msg: monitoring-prometheus is unavailable. Deploy monitoring through Git/Flux first, then check the selected
+        context and namespace.
+  alertmanager:
+    desc: Forward Alertmanager to localhost:9093 until interrupted
+    cmds:
+    - '{{.KUBE}} -n {{.NAMESPACE}} port-forward svc/monitoring-alertmanager 9093:9093'
+    interactive: true
+    preconditions:
+    - sh: '{{.KUBE}} -n {{.NAMESPACE}} get service monitoring-alertmanager --request-timeout=10s >/dev/null'
+      msg: monitoring-alertmanager is unavailable. Deploy monitoring through Git/Flux first, then check the selected
+        context and namespace.
+  credentials:
+    desc: Rewrite encrypted Alertmanager config using saved Telegram settings
+    cmds:
+    - python taskfiles/monitoring/create-secret.py
