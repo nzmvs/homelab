@@ -139,24 +139,27 @@ synthetic `PostgreSQLBackupAlertTest` rule has a one-minute hold time and routes
 through the same `service: pg-backups` receiver. Allow roughly two to three
 minutes after rule discovery for a clearly marked TEST firing message.
 
-After confirming the firing message:
-
-```sh
-go-task backup-alerts:test -- resolve
-```
-
-Review, commit and push again. This changes the expression to false while
-preserving the rule's identity. Confirm the RESOLVED message; grouping can add
-up to five minutes after Prometheus observes the change. Then clean up:
+After confirming the firing message, remove the temporary rule:
 
 ```sh
 go-task backup-alerts:test -- remove
+go-task validate
 ```
 
-Review, commit and push cleanup through Git/Flux. These tasks only edit local
-files; they do not deploy or send messages themselves. Do not break R2
-credentials or disable WAL archiving to test delivery. `go-task telegram:test`
-only verifies direct bot delivery, not this pipeline.
+Review, commit and push cleanup through Git/Flux. Verify that the test
+PrometheusRule is removed and the test alert clears in Prometheus/Alertmanager.
+The real backup rules stay in place.
+
+For an explicit recovery-notification test before cleanup, optionally run
+`go-task backup-alerts:test -- resolve`, review/commit/push, and confirm the
+RESOLVED message. This changes the expression to false while preserving the
+rule's identity. Grouping can add up to five minutes after Prometheus observes
+the change. Then run `remove` and deploy cleanup as above.
+
+These tasks only edit local files; they do not deploy or send messages
+themselves. Do not break R2 credentials or disable WAL archiving to test
+delivery. `go-task telegram:test` only verifies direct bot delivery, not this
+pipeline.
 
 For real failures, follow the [backup runbook](postgres-backups.md) to inspect
 Backup resources and R2 archives. An empty alert list is meaningful only after
