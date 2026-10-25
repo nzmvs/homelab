@@ -96,6 +96,20 @@ PrometheusRule resources, so their CRDs must be installed first.
 
 ## Verify after deployment
 
+Run the read-only live verification first:
+
+```sh
+go-task monitoring:verify
+```
+
+This queries Prometheus and Alertmanager through the Kubernetes service proxy;
+no port-forward is needed. It checks PostgreSQL targets, expected rules, required
+backup/WAL metrics, synthetic test state and cumulative Telegram counters.
+A nonzero exit means a scrape, rule state/health or required metric needs
+attention. Counters alone do not prove phone receipt or recovery delivery.
+
+For visual inspection, open the UIs using the tasks below.
+
 The UI forwarding and log tasks require the monitoring HelmRelease to have
 deployed its Services and workloads. Local manifests alone do not create them.
 If a task reports monitoring unavailable, inspect Flux deployment status before

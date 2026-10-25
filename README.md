@@ -178,6 +178,8 @@ The default task lists commands. `validate` renders manifests locally;
 scenarios/config checks. Python helpers retain credential handling and test
 logic. Credential tasks write local encrypted files; `telegram:test` sends one
 message. Port-forward tasks run until interrupted with Ctrl+C.
+Run `go-task monitoring:verify` for read-only live scrape, rule, metric and
+Telegram-counter checks without opening a UI.
 
 Live inspection tasks explicitly use context `homelab`. Override it when
 needed, for example `go-task monitoring:status KUBE_CONTEXT=homelab`.

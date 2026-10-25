@@ -50,3 +50,10 @@ tasks:
     desc: Rewrite encrypted Alertmanager config using saved Telegram settings
     cmds:
     - python taskfiles/monitoring/create-secret.py
+  verify:
+    desc: Read-only check of live PostgreSQL scrapes, rules, metrics and Telegram counters
+    cmds:
+    - python taskfiles/monitoring/verify.py --kube {{shellQuote .KUBE}} --namespace {{shellQuote .NAMESPACE}}
+    preconditions:
+    - sh: command -v kubectl && python -c 'import yaml'
+      msg: kubectl and Python with PyYAML are required.
