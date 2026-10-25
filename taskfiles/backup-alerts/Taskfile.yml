@@ -7,3 +7,10 @@ tasks:
     preconditions:
     - sh: command -v docker && command -v sops && python -c 'import yaml'
       msg: Docker, SOPS and Python with PyYAML are required.
+  test:
+    desc: 'Prepare local synthetic alert: -- fire, resolve or remove (deploy via Git/Flux)'
+    cmds:
+    - python taskfiles/backup-alerts/test.py {{.CLI_ARGS}}
+    preconditions:
+    - sh: python -c 'import yaml'
+      msg: Python with PyYAML is required.

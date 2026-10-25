@@ -126,13 +126,37 @@ open `http://localhost:9093`. Check its logs for delivery failures:
 go-task monitoring:logs
 ```
 
-To test rule evaluation and delivery without damaging backups, temporarily add
-a separate PrometheusRule through Git/Flux with expression `vector(1)`, alert
-name `PostgreSQLBackupAlertTest`, label `service: pg-backups`, and a summary
-clearly marked as a test. Confirm the firing message, then remove that rule
-through Git/Flux and confirm the resolved message. Do not break R2 credentials
-or disable WAL archiving to test notifications. The existing
-`go-task telegram:test` only verifies direct bot delivery, not this pipeline.
+Test the full notification pipeline through local GitOps files:
+
+```sh
+go-task backup-alerts:test -- fire
+go-task validate
+```
+
+This creates `apps/postgres/backup-alert-test.yaml` and includes it in the
+PostgreSQL Kustomization. Review, commit and push for Flux to deploy. The
+synthetic `PostgreSQLBackupAlertTest` rule has a one-minute hold time and routes
+through the same `service: pg-backups` receiver. Allow roughly two to three
+minutes after rule discovery for a clearly marked TEST firing message.
+
+After confirming the firing message:
+
+```sh
+go-task backup-alerts:test -- resolve
+```
+
+Review, commit and push again. This changes the expression to false while
+preserving the rule's identity. Confirm the RESOLVED message; grouping can add
+up to five minutes after Prometheus observes the change. Then clean up:
+
+```sh
+go-task backup-alerts:test -- remove
+```
+
+Review, commit and push cleanup through Git/Flux. These tasks only edit local
+files; they do not deploy or send messages themselves. Do not break R2
+credentials or disable WAL archiving to test delivery. `go-task telegram:test`
+only verifies direct bot delivery, not this pipeline.
 
 For real failures, follow the [backup runbook](postgres-backups.md) to inspect
 Backup resources and R2 archives. An empty alert list is meaningful only after
