@@ -1,0 +1,33 @@
+version: '3'
+tasks:
+  check:
+    desc: Validate manifests and smoke-test pinned Homepage locally (Docker/network)
+    preconditions:
+    - sh: command -v docker && python -c 'import yaml'
+      msg: Docker and Python with PyYAML are required.
+    cmds:
+    - task: :validate
+    - python taskfiles/homepage/check.py
+  verify:
+    desc: Read-only check of Homepage readiness, RBAC, LAN routes and local DNS
+    preconditions:
+    - sh: command -v kubectl && python -c 'import yaml'
+      msg: kubectl and Python with PyYAML are required.
+    cmds:
+    - python taskfiles/homepage/verify.py --kube {{shellQuote .KUBE}} --namespace {{shellQuote .NAMESPACE}}
+  status:
+    desc: Inspect Homepage deployment, pods, service and LAN ingress
+    cmds:
+    - '{{.KUBE}} -n {{.NAMESPACE}} get deployment,pods,service,ingress'
+  logs:
+    desc: Read recent Homepage logs
+    cmds:
+    - '{{.KUBE}} -n {{.NAMESPACE}} logs deployment/homepage -c homepage --tail=100'
+  open:
+    desc: Forward Homepage to localhost:3000 until interrupted
+    interactive: true
+    preconditions:
+    - sh: '{{.KUBE}} -n {{.NAMESPACE}} get service homepage --request-timeout=10s >/dev/null'
+      msg: Deploy Homepage through Git/Flux before opening it.
+    cmds:
+    - '{{.KUBE}} -n {{.NAMESPACE}} port-forward svc/homepage 3000:3000'

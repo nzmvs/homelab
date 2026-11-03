@@ -4,3 +4,5 @@ resources:
   - namespace.yaml
   - helm.yaml
   - alertmanager-config.sops.yaml
+  - ingress.yaml
+  - lan-access.yaml

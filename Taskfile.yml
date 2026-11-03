@@ -19,6 +19,11 @@ includes:
     vars:
       KUBE: '{{.KUBECTL_COMMAND}}'
       NAMESPACE: monitoring
+  homepage:
+    taskfile: ./taskfiles/homepage/Taskfile.yml
+    vars:
+      KUBE: '{{.KUBECTL_COMMAND}}'
+      NAMESPACE: homepage
   backup-alerts: ./taskfiles/backup-alerts/Taskfile.yml
 tasks:
   default:

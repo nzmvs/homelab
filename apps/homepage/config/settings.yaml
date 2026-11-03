@@ -1,0 +1,9 @@
+title: Homelab
+description: Kubernetes applications and cluster status
+color: slate
+headerStyle: clean
+statusStyle: dot
+layout:
+  Cluster:
+    style: row
+    columns: 2

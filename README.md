@@ -13,6 +13,7 @@ live health report. Follow-up work is tracked in [TODO.md](TODO.md).
 | [cert-manager](infrastructure/cert-manager/helm.yaml) | Certificate manager | `cert-manager` | [Documentation](https://cert-manager.io/docs/) |
 | [CloudNativePG](infrastructure/cloudnative-pg/helm.yaml) | PostgreSQL operator | `cnpg-system` | [Documentation](https://cloudnative-pg.io/documentation/) |
 | [Barman Cloud plugin](infrastructure/plugin-barman-cloud/helm.yaml) | PostgreSQL backup and recovery | `cnpg-system` | [Documentation](https://cloudnative-pg.io/plugin-barman-cloud/docs/) |
+| [Homepage](apps/homepage/) | LAN landing page, Kubernetes status and discovered app links; image `v2.7.0` | `homepage` | [Documentation](https://gethomepage.dev/) |
 | [PostgreSQL](apps/postgres/cluster.yaml) | Database | `postgres` | [CloudNativePG](https://cloudnative-pg.io/documentation/) |
 | [Prometheus and Alertmanager](infrastructure/monitoring/helm.yaml) | PostgreSQL backup/WAL monitoring and Telegram alerts; chart `92.11.0` | `monitoring` | [Prometheus stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) |
 
@@ -23,6 +24,23 @@ create their target namespaces as configured.
 Monitoring declares its own namespace and installs Prometheus Operator
 `v0.94.1`, Prometheus and Alertmanager; Grafana and general cluster exporters
 are disabled.
+
+## Homepage and LAN application access
+
+[Homepage](apps/homepage/) provides a landing page at
+`http://homepage.k8s.lan`, Kubernetes status through its dedicated read-only
+ServiceAccount, and discovered links to Prometheus and Alertmanager. All three
+Ingresses use the existing RKE2 Traefik controller and allow only source
+addresses from `192.168.0.0/24`. Monitoring owns its
+[annotated routes](infrastructure/monitoring/ingress.yaml).
+
+LAN DNS must resolve `homepage.k8s.lan`, `prometheus.k8s.lan` and
+`alertmanager.k8s.lan` to node `192.168.0.40`. The endpoints use HTTP and have
+no application login; this configuration is for the trusted home LAN. It does
+not provide remote browser access over Tailscale. See the
+[Homepage runbook](docs/homepage.md) for DNS, validation, access controls and
+adding application links. Homepage configuration is Git-managed and ephemeral
+at runtime; no PVC or long-lived ServiceAccount token Secret is created.
 
 ## PostgreSQL
 
@@ -148,6 +166,7 @@ installed `go-task` executable. The root file composes the following modules:
 | [validate/Taskfile.yml](taskfiles/validate/Taskfile.yml) | Local manifest and whitespace checks |
 | [telegram/Taskfile.yml](taskfiles/telegram/Taskfile.yml) | Bot setup, delivery test and Flux notification inspection |
 | [postgres/Taskfile.yml](taskfiles/postgres/Taskfile.yml) | Credentials, backup/storage status and restore verification |
+| [homepage/Taskfile.yml](taskfiles/homepage/Taskfile.yml) | Local image smoke test, readiness/RBAC/LAN checks, logs and UI forwarding |
 | [monitoring/Taskfile.yml](taskfiles/monitoring/Taskfile.yml) | Chart rendering, aggregate checks, status, logs and UI forwarding |
 | [backup-alerts/Taskfile.yml](taskfiles/backup-alerts/Taskfile.yml) | Backup alert scenario and Alertmanager config validation |
 
@@ -183,6 +202,7 @@ Telegram-counter checks without opening a UI.
 
 Live inspection tasks explicitly use context `homelab`. Override it when
 needed, for example `go-task monitoring:status KUBE_CONTEXT=homelab`.
+`homepage:check` also smoke-tests the pinned Homepage image locally with Docker.
 Requirements depend on the task: kubectl/Git for local rendering, Helm/network
 for chart rendering, Python/PyYAML/SOPS for credential helpers, and Docker for
 alert validation. Tasks do not commit, push, reconcile, apply or delete cluster

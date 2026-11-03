@@ -42,7 +42,8 @@ are enabled. These rules do not send routine backup success notifications.
 Prometheus stores up to three days/4GB of metrics on a 5Gi `local-path` PVC;
 Alertmanager uses a 1Gi `local-path` PVC for notification state. These use the
 Delete storage class. As with other local-path volumes, requested sizes do not
-enforce filesystem quotas. The UIs use internal ClusterIP Services only.
+enforce filesystem quotas. The UIs retain ClusterIP Services and are also
+available through [LAN-only Traefik routes](homepage.md#lan-addresses).
 Monitor memory usage after deployment; the initial Prometheus request/limit is
 512Mi/1Gi. This stack cannot notify if the entire host, cluster or network fails;
 an external heartbeat monitor is needed for that.

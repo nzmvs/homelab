@@ -1,0 +1,55 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus
+  namespace: monitoring
+  annotations:
+    gethomepage.dev/enabled: 'true'
+    gethomepage.dev/group: Cluster
+    gethomepage.dev/name: Prometheus
+    gethomepage.dev/icon: prometheus.png
+    gethomepage.dev/description: Metrics and queries
+    gethomepage.dev/pod-selector: app.kubernetes.io/name=prometheus
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: monitoring-lan-only@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: prometheus.k8s.lan
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: monitoring-prometheus
+            port:
+              number: 9090
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  annotations:
+    gethomepage.dev/enabled: 'true'
+    gethomepage.dev/group: Cluster
+    gethomepage.dev/name: Alertmanager
+    gethomepage.dev/icon: alertmanager.png
+    gethomepage.dev/description: Alert routing and silences
+    gethomepage.dev/pod-selector: app.kubernetes.io/name=alertmanager
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: monitoring-lan-only@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: alertmanager.k8s.lan
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: monitoring-alertmanager
+            port:
+              number: 9093
