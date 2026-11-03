@@ -31,7 +31,43 @@ spec:
   values:
     fullnameOverride: monitoring
     grafana:
-      enabled: false
+      enabled: true
+      fullnameOverride: monitoring-grafana
+      # Let the chart generate an internal admin password; LAN access is anonymous.
+      adminPassword: ""
+      defaultDashboardsEnabled: false
+      deploymentStrategy:
+        type: Recreate
+      persistence:
+        enabled: true
+        storageClassName: local-path-retain
+        accessModes: [ReadWriteOnce]
+        size: 2Gi
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+      sidecar:
+        dashboards:
+          searchNamespace: monitoring
+          resource: configmap
+        datasources:
+          searchNamespace: monitoring
+          resource: configmap
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+      grafana.ini:
+        auth.anonymous:
+          enabled: true
+          org_role: Editor
+        users:
+          allow_sign_up: false
     defaultRules:
       create: false
     kubeStateMetrics:

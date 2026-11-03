@@ -15,6 +15,7 @@ live health report. Follow-up work is tracked in [TODO.md](TODO.md).
 | [Barman Cloud plugin](infrastructure/plugin-barman-cloud/helm.yaml) | PostgreSQL backup and recovery | `cnpg-system` | [Documentation](https://cloudnative-pg.io/plugin-barman-cloud/docs/) |
 | [Homepage](apps/homepage/) | LAN landing page, Kubernetes status and discovered app links; image `v2.7.0` | `homepage` | [Documentation](https://gethomepage.dev/) |
 | [PostgreSQL](apps/postgres/cluster.yaml) | Database | `postgres` | [CloudNativePG](https://cloudnative-pg.io/documentation/) |
+| [Grafana](infrastructure/monitoring/helm.yaml) | Grafana `13.2.4`; anonymous LAN Editor access and retained settings storage | `monitoring` | [Documentation](https://grafana.com/docs/grafana/latest/) |
 | [Prometheus and Alertmanager](infrastructure/monitoring/helm.yaml) | PostgreSQL backup/WAL monitoring and Telegram alerts; chart `92.11.0` | `monitoring` | [Prometheus stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) |
 
 Infrastructure HelmRelease and source objects live in `flux-system`; the table
@@ -22,21 +23,24 @@ lists the namespaces where the charts install their workloads. The PostgreSQL
 application declares its own namespace, while infrastructure Helm releases
 create their target namespaces as configured.
 Monitoring declares its own namespace and installs Prometheus Operator
-`v0.94.1`, Prometheus and Alertmanager; Grafana and general cluster exporters
-are disabled.
+`v0.94.1`, Prometheus, Alertmanager and Grafana. General cluster exporters
+remain disabled. Grafana uses a retained 2Gi PVC and the existing Prometheus
+and Alertmanager data sources; see the [Grafana runbook](docs/grafana.md).
 
 ## Homepage and LAN application access
 
 [Homepage](apps/homepage/) provides a landing page at
 `http://homepage.k8s.lan`, Kubernetes status through its dedicated read-only
-ServiceAccount, and discovered links to Prometheus and Alertmanager. All three
+ServiceAccount, and discovered links to Prometheus, Alertmanager and Grafana. All four
 Ingresses use the existing RKE2 Traefik controller and allow only source
 addresses from `192.168.0.0/24`. Monitoring owns its
 [annotated routes](infrastructure/monitoring/ingress.yaml).
 
-LAN DNS must resolve `homepage.k8s.lan`, `prometheus.k8s.lan` and
-`alertmanager.k8s.lan` to node `192.168.0.40`. The endpoints use HTTP and have
-no application login; this configuration is for the trusted home LAN. It does
+LAN DNS must resolve `homepage.k8s.lan`, `prometheus.k8s.lan`,
+`alertmanager.k8s.lan` and `grafana.k8s.lan` to node `192.168.0.40`.
+The endpoints use HTTP and have
+no required application login; Grafana allows anonymous dashboard editing.
+This configuration is for the trusted home LAN. It does
 not provide remote browser access over Tailscale. See the
 [Homepage runbook](docs/homepage.md) for DNS, validation, access controls and
 adding application links. Homepage configuration is Git-managed and ephemeral

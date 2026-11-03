@@ -56,8 +56,9 @@ def main():
             metadata = desired['metadata']
             live = get('-n', metadata['namespace'], 'get', 'ingress', metadata['name'])
             host = live['spec']['rules'][0]['host']
+            path = '/api/health' if metadata['name'] == 'grafana' else health_path
             try:
-                request = Request(f'http://{node_address}{health_path}', headers={'Host': host})
+                request = Request(f'http://{node_address}{path}', headers={'Host': host})
                 with opener.open(request, timeout=10) as response:
                     if response.status != 200:
                         raise RuntimeError(f'HTTP {response.status}')

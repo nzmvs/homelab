@@ -13,9 +13,9 @@ destination. Flux notifications continue to report reconciliation events.
 
 The [monitoring HelmRelease](../infrastructure/monitoring/helm.yaml) pins
 `kube-prometheus-stack` chart `92.11.0` (Prometheus Operator `v0.94.1`). It installs
-Prometheus, Alertmanager and the operator in `monitoring`. Grafana, node exporter,
-kube-state-metrics, cluster component scrapers and default alert rules are
-disabled. Only rules labeled `release: monitoring` are selected.
+Prometheus, Alertmanager, [Grafana](grafana.md) and the operator in `monitoring`.
+Node exporter, kube-state-metrics, cluster component scrapers and default alert
+rules remain disabled. Only rules labeled `release: monitoring` are selected.
 
 | Alert | Condition | Hold time |
 | --- | --- | --- |

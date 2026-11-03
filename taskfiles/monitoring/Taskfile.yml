@@ -37,6 +37,14 @@ tasks:
     - sh: '{{.KUBE}} -n {{.NAMESPACE}} get service monitoring-prometheus --request-timeout=10s >/dev/null'
       msg: monitoring-prometheus is unavailable. Deploy monitoring through Git/Flux first, then check the selected
         context and namespace.
+  grafana:
+    desc: Forward Grafana to localhost:3001 until interrupted
+    interactive: true
+    preconditions:
+    - sh: '{{.KUBE}} -n {{.NAMESPACE}} get service monitoring-grafana --request-timeout=10s >/dev/null'
+      msg: Deploy Grafana through Git/Flux before opening it.
+    cmds:
+    - '{{.KUBE}} -n {{.NAMESPACE}} port-forward svc/monitoring-grafana 3001:80'
   alertmanager:
     desc: Forward Alertmanager to localhost:9093 until interrupted
     cmds:

@@ -13,11 +13,12 @@ Configure these records in your home DNS, all pointing to `192.168.0.40`:
 | `homepage.k8s.lan` | http://homepage.k8s.lan | Landing page and Kubernetes status |
 | `prometheus.k8s.lan` | http://prometheus.k8s.lan | Metrics and queries |
 | `alertmanager.k8s.lan` | http://alertmanager.k8s.lan | Alerts and silences |
+| `grafana.k8s.lan` | http://grafana.k8s.lan | Dashboards and metric exploration |
 
 For a single computer, an alternative is to add the following to its hosts file:
 
 ```text
-192.168.0.40 homepage.k8s.lan prometheus.k8s.lan alertmanager.k8s.lan
+192.168.0.40 homepage.k8s.lan prometheus.k8s.lan alertmanager.k8s.lan grafana.k8s.lan
 ```
 
 A hosts entry on this workstation does not configure your phone. For phone
@@ -35,7 +36,8 @@ that network path before adjusting the allowlist.
 This is HTTP on the home LAN. No public DNS, router port forwarding, TLS
 certificate or Tailscale route is configured. Homepage has no login; Prometheus
 and Alertmanager are also unauthenticated here, including Alertmanager silence
-controls. The source-address rule restricts these routes to the trusted LAN;
+controls. Grafana permits anonymous Editor access for viewing and saving
+dashboards; see its [runbook](grafana.md). The source-address rule restricts these routes to the trusted LAN;
 it does not add encryption or user authentication. Keep internet port forwarding
 disabled. Direct access from outside home is not part of this setup.
 
@@ -51,7 +53,7 @@ cluster widget and app discovery across namespaces.
 
 The metrics widget uses the existing RKE2 metrics-server, not Prometheus.
 Discovery uses standard Ingress annotations; Traefik IngressRoute and Gateway
-API discovery are disabled. Monitoring owns [its two annotated Ingresses](../infrastructure/monitoring/ingress.yaml),
+API discovery are disabled. Monitoring owns [its annotated Ingresses](../infrastructure/monitoring/ingress.yaml),
 so links are declared beside the applications that provide them.
 
 Homepage settings, bookmarks and widgets are separate files in
@@ -84,8 +86,8 @@ network access for the image. It does not validate live discovery, DNS, RBAC
 or Ingress routing. The test cleans up its containers and temporary files.
 
 Review the changes, commit/push and let Flux reconcile. No task applies,
-commits, pushes or triggers reconciliation. Infrastructure creates the two
-monitoring routes; apps creates Homepage after infrastructure is ready. Traefik
+commits, pushes or triggers reconciliation. Infrastructure creates the monitoring
+routes; apps creates Homepage after infrastructure is ready. Traefik
 and its Middleware CRD are prerequisites supplied by this cluster's RKE2 setup.
 
 ## Verify after deployment
@@ -98,10 +100,10 @@ go-task homepage:verify
 
 Check that the Homepage Deployment is available and logs have no Kubernetes
 permission errors. Open the LAN URL, confirm the Kubernetes widget loads and
-both monitoring cards open the correct application.
+the monitoring cards open the correct application.
 
 `homepage:verify` checks Deployment availability, selected ServiceAccount
-permissions, all three HTTP health endpoints through their actual LAN Ingresses,
+permissions, all four HTTP health endpoints through their actual LAN Ingresses,
 and name resolution on the machine running the task. It reads the configured
 routes rather than duplicating their hostnames in the task. HTTP routing is
 checked with a Host header against the node IP, so a DNS failure is reported
