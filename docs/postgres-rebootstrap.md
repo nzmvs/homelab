@@ -1,77 +1,42 @@
-# Fresh homelab database bootstrap
+# Fresh database bootstrap
 
-Run commands from the repository root using `go-task`; see the
-[task guide](../README.md#runbook-tasks) for prerequisites, previews and context selection.
+**Only for an explicitly disposable, empty database on Delete-policy storage.**
+This is not recovery for the current Retain-backed `pg`. Use the
+[restore runbook](postgres-backups.md#restore-drill) for recovery.
 
-All cluster changes go through Git and Flux. The user runs deployment commands;
-the agent prepares files only. Use Cloudflare MCP for R2 inspection and cleanup.
-This procedure replaces an empty, disposable database on Delete-policy storage
-with a fresh database on Retain storage. It is not a recovery procedure for the
-current Retain-backed database. Check actual PVC ownership and reclaim policies
-before planning any replacement; do not assume retained data will be removed.
-
-## Choose the application password
-
-From the repository root, run:
+## Prepare
 
 ```sh
 go-task postgres:password
-```
-
-Enter your password twice at the hidden prompts. The helper updates only the
-SOPS-encrypted `pg-homelab` Secret locally, with username `homelab`; it handles
-base64 encoding and never writes the plaintext password to disk.
-
-## Stage 1: remove the old database
-
-For stage 1, edit the PostgreSQL Kustomization to include namespace, encrypted
-`pg-homelab` credentials, R2 credentials and ObjectStore, but exclude the Cluster
-and ScheduledBackup. Keep the Cluster file defining database/user `homelab`
-and a 20Gi request on `local-path-retain` for stage 2.
-
-Review and deploy this stage via Git/Flux. Removing the old Cluster prunes its
-owned resources; first verify that the disposable PVC is owned by that Cluster and
-its PV has Delete policy. Do not re-enable the Cluster until the old resources
-are actually gone. Keep the namespace and backup configuration.
-
-Read-only checks (run from the repository root):
-
-```sh
 go-task postgres:storage
 ```
 
-Verify `pg`, its pods and old `pg-1` PVC/PV are gone, and that
-`local-path-retain` exists with Retain policy. Do not delete resources directly
-with kubectl. Stop and inspect ownership/finalizers if teardown is incomplete.
+Confirm the old PVC belongs to the disposable Cluster and its PV has Delete
+policy. Prepare `cluster.yaml` for database/user `homelab`, 20Gi on
+`local-path-retain`.
 
-## Clear the old test archive
+## 1. Teardown
 
-Only after teardown has completed and nothing is archiving, use Cloudflare MCP
-to list and delete objects under `pg/` in `homelab-postgres-backups`. The user
-approved discarding these empty-database test backups. Keep the bucket and any
-unrelated prefixes; verify `pg/` is empty before continuing. Reuse the existing
-ObjectStore, credentials and archive name; no new serverName is required.
+Exclude `cluster.yaml` and `scheduled-backup.yaml` from
+`apps/postgres/kustomization.yaml`; retain the namespace, encrypted application
+and R2 credentials, and ObjectStore. Validate and deploy through Git/Flux.
 
-## Stage 2: bootstrap fresh
+Run `go-task postgres:storage`. Verify the old Cluster, pods and PVC/PV are
+gone and `local-path-retain` exists. Stop on incomplete teardown/finalizers.
 
-Re-add these two resources to `apps/postgres/kustomization.yaml`:
+## 2. Clear the disposable archive
 
-```yaml
-  - cluster.yaml
-  - scheduled-backup.yaml
-```
+With explicit approval and no active archiver, use Cloudflare MCP to delete
+only `pg/` under `homelab-postgres-backups`. Preserve the bucket and unrelated
+prefixes. Verify the prefix is empty before continuing.
 
-Review, validate, commit and push that change for Flux to deploy. Never push
-stage 2 before teardown and archive cleanup have been verified.
+## 3. Bootstrap
 
-```sh
-go-task validate
-```
+Re-include `cluster.yaml` and `scheduled-backup.yaml`. Run `go-task validate`,
+then deploy through Git/Flux only after teardown and archive cleanup pass.
 
-Verify the new Cluster is Ready, its new PV uses Retain, and the new database
-`homelab` is owned by `homelab`. Check continuous archiving and a completed backup;
-then confirm new backup/WAL objects in R2. Retain is not a backup, and local-path
-does not enforce the 20Gi request as a filesystem quota.
+Run `go-task postgres:status` and `go-task postgres:storage`. Verify Cluster
+Ready, new PV Retain, database/owner `homelab`, successful archiving and a
+completed backup with new R2 objects.
 
-Connection after stage 2: `192.168.0.40:30432`, database/user `homelab`.
-The password is in Secret `postgres/pg-homelab` (encrypted in the repository).
+Connect at `192.168.0.40:30432`; credentials: `postgres/pg-homelab`.

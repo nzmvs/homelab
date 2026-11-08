@@ -1,52 +1,34 @@
 # PostgreSQL backups
 
-Run commands from the repository root using `go-task`; see the
-[task guide](../README.md#runbook-tasks) for prerequisites, previews and context selection.
+R2: `s3://homelab-postgres-backups/`, archive `pg`. Base backups run at 02:00
+in the operator's timezone, with continuous WAL archiving and a seven-day
+recovery window (not seven backup files).
 
-The manifests configure Barman WAL archiving and compressed base backups in
-`s3://homelab-postgres-backups/`, under the server name `pg`. The schedule requests
-an immediate backup and subsequent backups at 02:00 in the operator’s timezone. Retention is a seven-day
-recovery window, not a fixed count of seven backups.
-
-Verify backup and WAL objects in R2, then test recovery using the drill below.
-Record the date, source backup and comparison results in the global changelog.
-A successful empty-database restore does not prove recovery of application records.
-
-The schedule uses six cron fields (`0 0 2 * * *`), including seconds. Do not
-prepend `CRON_TZ`: the installed admission validator rejects it. Confirm the
-actual next execution time through `ScheduledBackup.status.nextScheduleTime`;
-the schedule itself does not explicitly set a timezone.
+The six-field schedule includes seconds. Do not prepend `CRON_TZ`; the admission
+validator rejects it. Check `ScheduledBackup.status.nextScheduleTime` for actual
+execution time.
 
 ## Deployment and verification
 
-After reviewing, committing and pushing the manifests for Flux reconciliation,
-expect the single-instance database to restart as the plugin sidecar is added.
-Flux decrypts `r2-credentials.sops.yaml` using its existing `sops-age` Secret.
-Do not apply the encrypted file directly with kubectl.
-
 ```sh
+go-task postgres:r2-credentials   # initial encrypted credentials; refuses overwrite
+go-task validate
 go-task postgres:status
 ```
 
-Check that the Cluster returns to Ready, WAL archiving succeeds and at least one
-Backup reaches `completed`. Also verify backup objects exist in the R2 bucket.
-Investigate events and logs if credentials, archiving or backups fail. Never
-paste decrypted Secrets into logs or chat.
+Deploy through Git/Flux. Adding the Barman sidecar restarts the single-instance
+database. Verify Cluster Ready, successful WAL archiving, a completed Backup
+and objects in R2 (use Cloudflare MCP).
 
-The initial `immediate` backup can race with the first plugin-attach pod rollout
-and fail with `requested plugin is not available`. If a retry is needed, declare a uniquely named
-`Backup` manifest in Git and include it in Kustomize for Flux to reconcile;
-do not create it directly with kubectl. Confirm the plugin sidecar is ready
-first. A ready pod alone does not prove R2 access or backup success.
+An initial immediate backup can fail with `requested plugin is not available`
+during sidecar rollout. Once the sidecar is ready, add a uniquely named `Backup`
+manifest through Git/Flux to retry.
 
 ## Restore drill
 
-To run a drill, create `apps/pg-restore/cluster.yaml` using the template below,
-add a child `kustomization.yaml` listing `cluster.yaml`, and add `pg-restore` to
-[parent apps Kustomization](../apps/kustomization.yaml). Review, commit and push
-for Flux to deploy. The temporary app is not part of the permanent inventory.
-Use the same PostgreSQL major version as the source and check its image tag
-before deploying the template.
+Create `apps/pg-restore/cluster.yaml` below and a child Kustomization listing it;
+include `pg-restore` in [apps](../apps/kustomization.yaml). Match the source
+PostgreSQL major version; update the example image tag before deployment if needed.
 
 ```yaml
 apiVersion: postgresql.cnpg.io/v1
@@ -78,37 +60,23 @@ spec:
       memory: 1Gi
 ```
 
-Flux will create a separate `pg-restore` Cluster in namespace `postgres`, reusing
-`r2-backups` and reading archive server `pg`. The template pins PostgreSQL 18.4;
-adjust it if the source version changes. There is no top-level `plugins` archiver
-configuration or backup schedule, so the drill does not write WAL or backups to
-the source archive. Recovery uses the latest usable base backup and available WAL.
-The source Cluster, its Retain PVC and its NodePort Service are unchanged.
+Keep the drill free of archiver `plugins` and backup schedules: it must only
+read archive `pg`. The template restores the latest usable backup and WAL onto
+**Delete-policy** storage. Check shared disk space; 20Gi is not an enforced quota.
 
-The temporary drill requests another `20Gi` on the existing **Delete-policy**
-`local-path` class so its volume can be cleaned up with the temporary cluster.
-Production `pg` continues to use `local-path-retain`. Actual disk consumption
-uses the shared filesystem; 20Gi is not an enforced quota.
-
-After Flux deployment, run:
+After Git/Flux deployment:
 
 ```sh
 go-task postgres:restore:verify
 ```
 
-Both database/owner results should be `homelab`. Compare any known application
-tables and records as well; Ready status and matching empty database metadata
-establish only a limited restore check. Record what was actually verified.
-These SQL queries inspect the source and restored databases without modifying them.
+Expect database/owner `homelab` in both clusters. Also compare known application
+tables and records; an empty-database restore is only a limited check. Record
+the source backup and comparison results.
 
-After verification, remove `pg-restore` from `apps/kustomization.yaml` and remove
-its app directory, then commit/push for Flux to prune the temporary Cluster.
-Verify only the drill pod/PVC/PV is removed and production `pg` remains healthy.
-Do not delete resources directly with kubectl. Never substitute `pg` for
-`pg-restore` in cleanup. No R2 deletion is needed for this restore drill.
+Remove only `pg-restore` from the apps Kustomization and its directory, then
+deploy cleanup through Git/Flux. Verify the drill pod/PVC/PV is removed and
+production `pg` remains healthy. Never substitute `pg` in cleanup or delete
+source R2 objects.
 
-## References
-
-- [Barman plugin usage and recovery](https://cloudnative-pg.io/plugin-barman-cloud/docs/usage/)
-- [Retention policies](https://cloudnative-pg.io/plugin-barman-cloud/docs/retention/)
-- [CloudNativePG scheduled backups](https://cloudnative-pg.io/docs/current/backup/)
+[Barman recovery reference](https://cloudnative-pg.io/plugin-barman-cloud/docs/usage/).

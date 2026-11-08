@@ -1,24 +1,15 @@
-# Repository instructions
+# Homelab
 
-Keep [README.md](README.md) up to date with the cluster contents declared in this
-repository. Whenever adding, removing, upgrading, configuring or moving a cluster
-component, update its README entry, manifest links, versions, namespaces,
-dependencies and relevant operational notes in the same change. Distinguish
-configured functionality from planned work; do not claim live health without
-checking it. Verify that relative documentation links resolve.
-
-All Kubernetes cluster configuration changes must go through Git and Flux.
-Do not apply, patch or delete live cluster resources directly; use kubectl for
-read-only inspection and validation.
-
-The agent prepares and validates local files; the user runs deployment commands.
-Do not commit, push, trigger reconciliations or perform remote mutations without
-explicit user authorization. Use the connected Cloudflare MCP for R2 operations
-rather than rclone.
-
-Keep README focused on declared architecture and stable operating guidance.
-Update it for configuration or procedure changes, not rollout phases, status
-transitions, command output or per-run resource IDs. Keep TODO focused on open
-work; remove completed items instead of keeping completion narratives. Record
-progress, dated evidence and outcomes in the global append-only CHANGELOG.
-Runbooks contain repeatable procedures, not another progress log.
+- Use `homelab` as the central task project label.
+- Change Kubernetes configuration only through Git/Flux, including authorized
+  deployments; never apply, patch or delete live resources directly.
+- Live inspection, port-forwarding and diagnostics are allowed when they do
+  not modify workloads or application data.
+- Prepare and validate locally. Leave deployment to the user unless explicitly
+  delegated. Commits, pushes, reconciliations and other remote mutations
+  require explicit authorization.
+- Expose repeatable runbook commands through modular go-task files, with
+  helper scripts beside their Taskfile.
+- Use Cloudflare MCP for R2 operations, not rclone.
+- Keep README as a component/access index and procedures in `docs/`.
+  Update affected documentation and verify links with configuration changes.
