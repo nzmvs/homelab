@@ -4,6 +4,7 @@ vars:
   KUBECTL_COMMAND: kubectl --context {{shellQuote .KUBE_CONTEXT}}
 includes:
   validate: ./taskfiles/validate/Taskfile.yml
+  knowledge: ./taskfiles/knowledge/Taskfile.yml
   telegram:
     taskfile: ./taskfiles/telegram/Taskfile.yml
     vars:

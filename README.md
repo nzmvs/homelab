@@ -3,6 +3,8 @@
 RKE2 + Flux. [Infrastructure](clusters/homelab/infrastructure.yaml) reconciles before
 [apps](clusters/homelab/apps.yaml).
 
+[Knowledge bundle](knowledge/index.md) · architecture and dependencies (OKF).
+
 | Component | Namespace |
 | --- | --- |
 | [Flux](clusters/homelab/flux-system/) | `flux-system` |
@@ -33,6 +35,7 @@ Database/user: `homelab`; Secret: `postgres/pg-homelab`.
 ```sh
 go-task --list
 go-task validate
+go-task knowledge:check
 go-task monitoring:check
 ```
 

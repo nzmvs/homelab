@@ -1,0 +1,9 @@
+version: '3'
+tasks:
+  check:
+    desc: Check knowledge metadata, navigation and repository source links (local only)
+    cmds:
+    - python taskfiles/knowledge/check.py
+    preconditions:
+    - sh: python -c 'import yaml'
+      msg: Python with PyYAML is required.
